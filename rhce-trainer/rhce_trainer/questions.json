@@ -1,0 +1,529 @@
+[
+  {
+    "id": 1,
+    "title": "安装和配置 Ansible",
+    "dependencies": [],
+    "nodes": [],
+    "artifacts": [
+      "inventory",
+      "ansible.cfg"
+    ],
+    "playbook": null,
+    "question": "安装所需 Ansible 软件；静态清单：dev=servera，test=serverb，prod=serverc/serverd，balancers=bastion，webservers 的子组为 prod。ansible.cfg 指向本目录 inventory，roles_path 包含本目录 roles，collections_path 包含本目录 mycollections。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "inventory",
+      "ansible.cfg"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 2,
+    "title": "创建受管节点存储库",
+    "dependencies": [
+      1
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "yum_repo.yml"
+    ],
+    "playbook": "yum_repo.yml",
+    "question": "为所有受管节点创建启用的 rh294_BASE、rh294_STREAM 存储库；描述分别为 rh294 base software、rh294 stream software；BaseOS/AppStream URL 位于 http://content.example.com/rhel9.0/x86_64/dvd/；开启 GPG 检查并使用同目录 RPM-GPG-KEY-redhat-release。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion",
+      "yum_repo.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 3,
+    "title": "安装软件包",
+    "dependencies": [
+      1,
+      2
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd"
+    ],
+    "artifacts": [
+      "packages.yml"
+    ],
+    "playbook": "packages.yml",
+    "question": "在 dev/test/prod 安装 php、mariadb；dev 安装 Development Tools 软件包组，并更新所有软件包到可用最新版本。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "packages.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 4,
+    "title": "使用 Timesync RHEL 系统角色",
+    "dependencies": [
+      1,
+      2
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "timesync.yml"
+    ],
+    "playbook": "timesync.yml",
+    "question": "安装 RHEL 系统角色软件包，使用 timesync 角色在所有受管节点配置当前有效 NTP 提供程序，时间服务器为 classroom.example.com。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion",
+      "timesync.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 5,
+    "title": "使用 SELinux RHEL 系统角色",
+    "dependencies": [
+      1
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "selinux.yml"
+    ],
+    "playbook": "selinux.yml",
+    "question": "安装 RHEL 系统角色，使用 SELinux 角色在所有节点设置 SELinux 强制模式。题面没有文件名，本工具约定 selinux.yml。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion",
+      "selinux.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 6,
+    "title": "使用 Ansible Galaxy 安装角色",
+    "dependencies": [
+      1
+    ],
+    "nodes": [],
+    "artifacts": [
+      "roles/requirements.yml",
+      "roles/balancer",
+      "roles/phpinfo"
+    ],
+    "playbook": null,
+    "question": "使用 roles/requirements.yml 从 http://classroom.example.com/content/haproxy.tar.gz 和 phpinfo.tar.gz 安装角色到本目录 roles，分别命名 balancer 和 phpinfo。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "roles/requirements.yml",
+      "roles/balancer",
+      "roles/phpinfo"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 7,
+    "title": "安装集合",
+    "dependencies": [
+      1
+    ],
+    "nodes": [],
+    "artifacts": [
+      "mycollections"
+    ],
+    "playbook": null,
+    "question": "将 http://content.example.com/ansible-posix-1.5.1.tar.gz、community-general-6.3.0.tar.gz 安装到本目录 mycollections，供 devops 使用。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "mycollections"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 8,
+    "title": "创建和使用角色",
+    "dependencies": [
+      1,
+      2,
+      7
+    ],
+    "nodes": [
+      "serverc",
+      "serverd"
+    ],
+    "artifacts": [
+      "roles/apache",
+      "newrole.yml",
+      "roles/apache/templates/index.html.j2"
+    ],
+    "playbook": "newrole.yml",
+    "question": "在 roles 创建 apache 角色：安装 httpd，设置开机启用；防火墙启用并运行、允许 HTTP；使用 index.html.j2 模板生成 /var/www/html/index.html，内容为 Welcome to HOSTNAME on IPADDRESS（实际 FQDN 和 IP）。newrole.yml 在 webservers 使用该角色。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "serverc",
+      "serverd",
+      "roles/apache",
+      "newrole.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 9,
+    "title": "从 Ansible Galaxy 使用角色",
+    "dependencies": [
+      1,
+      2,
+      6,
+      7,
+      8
+    ],
+    "nodes": [
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "roles.yml"
+    ],
+    "playbook": "roles.yml",
+    "question": "roles.yml 中的一个 play 在 balancers 使用 balancer 角色，让 HTTP 请求在两个 webservers 间分配；另一个 play 在 webservers 使用 phpinfo 角色，/hello.php 显示 Hello PHP World from FQDN 及 PHP 配置信息。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "serverc",
+      "serverd",
+      "bastion",
+      "roles.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 10,
+    "title": "创建和使用逻辑卷",
+    "dependencies": [
+      1,
+      2,
+      7
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "lv.yml"
+    ],
+    "playbook": "lv.yml",
+    "question": "所有受管节点：在 research 卷组创建 data 逻辑卷 600 MiB 并格式化为 ext4；容量不足显示 Could not create logical volume of that size，改用 400 MiB；卷组不存在显示 Volume group does not exist；不得挂载。训练前置：a/b 有足够空间，c/d 只能容纳 400 MiB，bastion 无 research。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion",
+      "lv.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": [
+      11
+    ]
+  },
+  {
+    "id": 11,
+    "title": "创建分区",
+    "dependencies": [
+      1,
+      2,
+      7
+    ],
+    "nodes": [
+      "servera"
+    ],
+    "artifacts": [
+      "parted.yml"
+    ],
+    "playbook": "parted.yml",
+    "question": "在 dev 执行：/dev/vdd 存在时尝试 1500 MiB 分区，容量不足输出 Could not create partition of that size 并创建 800 MiB；不存在输出 disk /dev/vdd does not exist。/dev/vdb 存在时也有同样容量要求。ext4，挂载 /mnt/fs01。当前基线 vdd 不存在，vdb 为 1 GiB。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "parted.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": [
+      10
+    ]
+  },
+  {
+    "id": 12,
+    "title": "生成主机文件",
+    "dependencies": [
+      1
+    ],
+    "nodes": [
+      "servera"
+    ],
+    "artifacts": [
+      "hosts.j2",
+      "hosts.yml"
+    ],
+    "playbook": "hosts.yml",
+    "question": "创建 hosts.j2 模板，hosts.yml 在 dev 生成 /etc/myhosts，含 localhost IPv4/IPv6 两行及全部五个受管节点的 IP、FQDN、短名，顺序不限。题面示例 a–d 为 172.25.254.10–13，与首页/实际 IP 冲突；默认按题面字面评分，可显式选择 live 配置。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "hosts.j2",
+      "hosts.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": [],
+    "execution_nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ]
+  },
+  {
+    "id": 13,
+    "title": "修改文件内容",
+    "dependencies": [
+      1
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "issue.yml"
+    ],
+    "playbook": "issue.yml",
+    "question": "issue.yml 在全部清单主机运行；/etc/issue 在 dev 为 Development，在 test 为 Test，在 prod 为 Production，均为单行文本。balancers 未指定内容。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion",
+      "issue.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 14,
+    "title": "创建 Web 内容目录",
+    "dependencies": [
+      1,
+      2,
+      7
+    ],
+    "nodes": [
+      "servera"
+    ],
+    "artifacts": [
+      "webcontent.yml"
+    ],
+    "playbook": "webcontent.yml",
+    "question": "webcontent.yml 在 dev：创建 /webdev，属组 devops，权限 2775；/var/www/html/webdev 符号链接到 /webdev；/webdev/index.html 单行 Development；从 HTTP /webdev/ 可访问。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "webcontent.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 15,
+    "title": "生成硬件报告",
+    "dependencies": [
+      1
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion"
+    ],
+    "artifacts": [
+      "hwreport.yml"
+    ],
+    "playbook": "hwreport.yml",
+    "question": "hwreport.yml 在所有节点从 http://172.25.254.254/content/hwreport.empty 下载到 /root/hwreport.txt 并填写清单主机名、总内存 MB、BIOS 版本、vda/vdb 大小；每行 key=value，缺项为 NONE。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "bastion",
+      "hwreport.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 16,
+    "title": "创建密码库",
+    "dependencies": [
+      1
+    ],
+    "nodes": [],
+    "artifacts": [
+      "locker.yml",
+      "secret.txt"
+    ],
+    "playbook": null,
+    "question": "创建加密 locker.yml，含 pw_developer、pw_manager 两个变量；按 PDF 第 19 页指定值和密码，密码存放 secret.txt。本工具从原 PDF 临时读取敏感值，不存入题库。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "locker.yml",
+      "secret.txt"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 17,
+    "title": "创建用户账户",
+    "dependencies": [
+      1,
+      16
+    ],
+    "nodes": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd"
+    ],
+    "artifacts": [
+      "users.yml",
+      "user_list.yml"
+    ],
+    "playbook": "users.yml",
+    "question": "从 http://172.25.254.254/content/user_list.yml 下载列表；users.yml 在 dev/test 创建 developer 用户，附加组 devops，密码来自 locker.yml 的 pw_developer；prod 创建 manager，附加组 opsmgr，密码来自 pw_manager。密码采用 SHA512 哈希，使用 secret.txt 解密。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "serverb",
+      "serverc",
+      "serverd",
+      "users.yml",
+      "user_list.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 18,
+    "title": "更新 Ansible 库密钥",
+    "dependencies": [
+      1
+    ],
+    "nodes": [],
+    "artifacts": [
+      "salaries.yml"
+    ],
+    "playbook": null,
+    "question": "从 http://172.25.254.254/content/salaries.yml 下载加密库，按 PDF 第 21 页将旧密码改为新密码，内容保持不变且仍加密。敏感值运行时从 PDF 读取。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "salaries.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  },
+  {
+    "id": 19,
+    "title": "创建计划任务",
+    "dependencies": [
+      1
+    ],
+    "nodes": [
+      "servera"
+    ],
+    "artifacts": [
+      "cron.yml"
+    ],
+    "playbook": "cron.yml",
+    "question": "cron.yml 在 dev 为 natasha 创建每两分钟执行 echo hello 的计划任务。",
+    "base": "/home/devops/ansible",
+    "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
+    "touched_resources": [
+      "servera",
+      "cron.yml"
+    ],
+    "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
+    "conflicts": []
+  }
+]

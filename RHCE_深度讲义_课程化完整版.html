@@ -1,0 +1,3792 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RHCE 课程深度讲义｜Ansible 从入门到考试稳定复现</title>
+<style>
+:root{--bg:#f4f5f3;--paper:#fbfbf9;--ink:#232725;--muted:#70766f;--line:#dedfda;--accent:#65766d;--accent2:#8b6f64;--soft:#eef1ed;--soft2:#f3eeeb;--code:#202523;--green:#637b68;--warn:#8a735d;--red:#8a625f;--shadow:0 7px 25px rgba(31,38,33,.055)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;line-height:1.72;font-size:15px}code,pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{background:#edf0ed;padding:.08em .3em;border-radius:4px;font-size:.92em}a{color:inherit}.layout{display:grid;grid-template-columns:280px minmax(0,1fr)}aside{height:100vh;position:sticky;top:0;background:#2c322f;color:#d8ddd9;padding:22px 18px;overflow:auto}.logo{font-size:19px;font-weight:800;color:#fff;line-height:1.3}.logo small{display:block;color:#aeb7b1;font-size:11px;font-weight:500;margin-top:5px}.search{margin:18px 0 10px}.search input{width:100%;background:#3a423e;border:1px solid #4a544f;color:#fff;border-radius:8px;padding:9px 10px;outline:none}nav{display:grid;gap:3px;margin-top:10px}nav a{text-decoration:none;padding:7px 8px;border-radius:7px;font-size:12px;color:#cbd2cd;display:flex;gap:8px;align-items:center}nav a:hover{background:#3a423e;color:white}nav a span{font-variant-numeric:tabular-nums;color:#91a098;font-size:10px}.side-actions{margin-top:20px;border-top:1px solid #444d48;padding-top:14px}.side-actions button{width:100%;margin:4px 0;background:#3c4540;border:0;color:#dce1de;border-radius:7px;padding:8px;cursor:pointer}.progress{font-size:11px;color:#aeb7b1;margin:10px 2px}main{min-width:0}.hero{background:linear-gradient(135deg,#2e3531,#424b46);color:white;padding:50px clamp(24px,5vw,72px) 42px;border-bottom:1px solid #545d58}.hero .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#bec8c1;font-weight:700}.hero h1{font-size:clamp(32px,4.2vw,50px);line-height:1.16;margin:11px 0 14px;letter-spacing:-.025em}.hero p{max-width:920px;color:#dbe0dc;font-size:16px;margin:0}.hero .meta{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}.pill{font-size:11px;border:1px solid #647069;padding:4px 8px;border-radius:999px;color:#d9dfdb}.content{max-width:1320px;margin:auto;padding:28px clamp(18px,4vw,55px) 70px}.intro-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:-18px;position:relative}.card{background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:16px;box-shadow:var(--shadow)}.card h3{margin-top:0}h2{font-size:27px;letter-spacing:-.02em;margin:0}h3{font-size:17px;margin:24px 0 8px;letter-spacing:-.01em}p{margin:8px 0 13px}strong{font-weight:750;color:#1d2420}.chapter{background:var(--paper);border:1px solid var(--line);border-radius:14px;margin:28px 0;padding:22px clamp(16px,3vw,30px);box-shadow:var(--shadow);scroll-margin-top:16px}.chapter-head{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:start;border-bottom:1px solid #e7e8e4;padding-bottom:15px;margin-bottom:18px}.chapter-no{font-size:13px;font-weight:800;width:38px;height:38px;border:1px solid #cdd2ce;border-radius:50%;display:grid;place-items:center;color:var(--accent)}.chapter-head p{color:var(--muted);margin:5px 0 0;font-size:13px;max-width:900px}.chapter-check{font-size:11px;color:var(--muted);white-space:nowrap}.chapter-check input{accent-color:var(--green)}.lecture>p{max-width:1040px}.model{background:var(--soft);border-left:3px solid #8a9990;border-radius:7px;padding:12px 14px;margin:16px 0}.model-title{font-weight:800;font-size:12px;color:#4f5f56;margin-bottom:8px}.flow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px}.flow span{background:#fafbf9;border:1px solid #d8ddd8;border-radius:7px;padding:7px 9px}.flow b{color:#929b95}.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{font-size:11px;background:#f9faf8;border:1px solid #d7ddd8;padding:5px 7px;border-radius:999px}.tree,.role-tree{display:grid;gap:4px;font-size:12px}.tree span,.role-tree span{padding-left:16px;color:#465048}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}.two-col>div{border:1px solid #e1e3df;border-radius:9px;padding:13px;background:#fdfdfb}pre{background:var(--code);color:#e6ebe7;border-radius:9px;padding:13px 14px;overflow:auto;font-size:12px;line-height:1.55;margin:10px 0 16px}pre code{background:transparent;padding:0;font-size:inherit}table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0 18px}th,td{padding:9px 10px;border-bottom:1px solid #e4e6e2;vertical-align:top;text-align:left}th{background:#f0f2ef;color:#535d56;font-size:11px}.precision{background:var(--soft2);border-left:3px solid #a58a7c;padding:11px 13px;border-radius:7px;font-size:13px;margin:15px 0}.exam-box{background:#f1f3ef;border:1px solid #dce1da;border-left:4px solid var(--green);padding:12px 14px;border-radius:8px;font-size:13px;margin:18px 0}.exercise{background:#f6f3ef;border:1px solid #e4ddd6;padding:12px 14px;border-radius:8px;font-size:13px;margin:14px 0}details{margin-top:7px}summary{cursor:pointer;font-weight:700;color:#57635b}.raw-notes{border-top:1px dashed #d8dad5;margin-top:20px;padding-top:12px}.raw-notes summary{font-size:12px;color:#7c817c}.raw-help{font-size:11px;color:#858b85;margin:8px 0}.raw-notes pre{background:#f3f4f1;color:#4e5550;border:1px solid #e1e3df;max-height:560px;white-space:pre-wrap;font-family:"SFMono-Regular",Consolas,monospace}.guide{margin:26px 0}.guide h2{font-size:23px}.guide .card{margin:12px 0}.steps{counter-reset:s;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.steps div{background:#f9faf8;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px}.steps div:before{counter-increment:s;content:counter(s);display:block;font-weight:900;color:#89948d;font-size:11px;margin-bottom:5px}.source-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#687069}.source-legend span{padding:3px 7px;border-radius:6px;border:1px solid #d9ddd9}.exam-map{overflow:auto}.exam-map table{min-width:800px}.hidden{display:none!important}.dim-source .raw-notes{display:none}footer{font-size:11px;color:#7a817c;padding:20px 0;border-top:1px solid var(--line);margin-top:30px}@media(max-width:1050px){.layout{grid-template-columns:1fr}aside{display:none}.intro-grid,.two-col{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,1fr)}}@media(max-width:640px){.hero{padding:32px 17px}.content{padding:20px 11px 55px}.chapter{padding:16px 13px}.chapter-head{grid-template-columns:38px 1fr}.chapter-check{grid-column:2}.steps{grid-template-columns:1fr}}
+</style>
+</head><body><div class="layout">
+<aside><div class="logo">RHCE 深度课程讲义<small>保留课堂口吻 · 补足本质 · 对齐模拟题</small></div><div class="search"><input id="search" placeholder="搜索：facts / vault / lvol / when..." /></div><nav><a href="#start"><span>00</span>使用这份讲义</a><a href="#ch01"><span>01</span>认识 Ansible</a><a href="#ch02"><span>02</span>Ansible 配置和使用</a><a href="#ch03"><span>03</span>Ad-hoc 与常用模块</a><a href="#ch04"><span>04</span>Playbook</a><a href="#ch05"><span>05</span>变量、Facts 与魔法变量</a><a href="#ch06"><span>06</span>条件判断与错误处理</a><a href="#ch07"><span>07</span>循环</a><a href="#ch08"><span>08</span>文件内容修改模块</a><a href="#ch09"><span>09</span>Jinja2 模板</a><a href="#ch10"><span>10</span>Role 角色管理</a><a href="#ch11"><span>11</span>Ansible Vault</a><a href="#ch12"><span>12</span>Collection 集合</a><a href="#ch13"><span>13</span>Ansible Navigator</a><a href="#exam"><span>EX</span>19 题考试映射</a><a href="#manual"><span>MX</span>考场查手册方法</a></nav><div class="side-actions"><button id="sourceToggle">隐藏 / 显示原讲义留档</button><button id="resetProgress">清空学习进度</button><div class="progress" id="progressText">已学 0 / 13</div></div></aside>
+<main><header class="hero"><div class="eyebrow">RHCE / RH294 · Ansible Course Notes Expanded</div><h1>把碎片化随堂笔记，重新串成一堂能一路听下去的课</h1><p>这份网站完整保留你上传的 13 份 RHCE 随堂讲义内容，同时把原本课堂里“顺手说一句”的知识补全成更稳定的心智模型。正文仍然用比较随和的讲课方式推进：先告诉你现在在解决什么问题，再讲语法和模块，最后接到模拟题与考场复现。你不用把它当百科全书硬啃，更适合一章一章跟着思路走。</p><div class="meta"><span class="pill">13 个章节</span><span class="pill">原讲义全文内嵌</span><span class="pill">深度补充与精确说明</span><span class="pill">19 道模拟题映射</span><span class="pill">离线单文件 HTML</span></div></header>
+<div class="content">
+<section id="start" class="guide searchable"><div class="intro-grid"><div class="card"><h2>先说这份讲义怎么用</h2><p>你刚从 RHCSA 过来，最容易掉进的坑是：看到每道题几十行 YAML，就以为 RHCE 的核心是“背配置文件”。其实不是。更有效的顺序是：<strong>先把题目翻译成对象和控制流，再用手册把模块参数补全。</strong>这份网站会反复用这个方式带你看每一章。</p><div class="steps"><div>圈 hosts：这件事在哪些主机上做？</div><div>拆对象：用户、包、服务、文件、存储还是 Role？</div><div>找数据：常量、变量文件、Facts、Vault 还是上一个 task 结果？</div><div>找控制流：loop、when、block/rescue 是否需要？</div><div>写完验证：最终系统状态怎么用 Linux 命令确认？</div></div></div><div class="card"><h3>页面里的三种信息</h3><div class="source-legend"><span>正文：重写后的课程讲解</span><span>精确一点：补充/校正</span><span>考试连接：对模拟题</span><span>原讲义留档：完整源内容</span></div><p style="font-size:12px;color:var(--muted)">原讲义中有一些口语化简化、拼写差异或版本性表达，我不会悄悄抹掉，而是在正文里用“精确一点”明确告诉你：课堂表达想传递什么，以及更稳妥的技术理解是什么。</p></div></div></section>
+<section class="chapter searchable" id="ch01" data-title="认识 Ansible">
+<div class="chapter-head"><div class="chapter-no">01</div><div><h2>认识 Ansible</h2><p>先不要急着背 YAML。第一章最重要的是建立一个画面：Ansible 到底在谁身上运行、它怎么找到机器、怎么把“我要这个状态”变成远端动作。</p></div><label class="chapter-check"><input type="checkbox" data-progress="01"> 学完</label></div>
+
+<div class="lecture">
+<p>我们先把 Ansible 放回你刚学完 RHCSA 的世界里看。RHCSA 里你做事情的方式通常是：SSH 到机器上，执行 <code>useradd</code>、<code>dnf install</code>、<code>systemctl</code>、改配置文件。Ansible 并没有创造一套新的 Linux，它只是把这些“对系统对象的操作”抽象成了可以批量、重复、声明式执行的任务。所以你一开始不要把它想成编程语言，先把它想成一个<strong>远程批量执行 + 状态管理的工具箱</strong>。</p>
+<p>讲义列了五个特点：能管理云、网络设备、Linux/Windows、存储；通常借助设备已有的连接方式接管，不要求每台 Linux 节点常驻一个 Ansible Agent；没有必须长期运行的中心服务；Ansible 本身是工具而不是常驻 daemon；功能通过大量模块扩展。这里有一个特别值得形成的心智模型：<strong>“控制节点”是一次执行中的角色，不是一个必须永远存在的中心服务器。</strong>哪台机器装了 Ansible、拿着 inventory 和 playbook 发起任务，哪台机器就可以扮演控制端。</p>
+
+<div class="model"><div class="model-title">先记住这一条执行链</div><div class="flow"><span>Playbook / Ad-hoc</span><b>→</b><span>Inventory 选主机</span><b>→</b><span>Module 描述动作</span><b>→</b><span>Connection Plugin 连接</span><b>→</b><span>远端执行</span><b>→</b><span>返回 ok / changed / failed</span></div></div>
+
+<p>讲义把架构拆成 <strong>ansible、inventory、modules、plugins</strong>。这个拆法非常适合考试。你以后看到任何题都可以问四句：我要从哪个项目目录发起？目标主机在哪个组？我应该调用哪个模块？这个模块需要怎样连接、提权、读取变量？你会发现，绝大多数 RHCE 题只是把这四个东西重新组合。</p>
+
+<div class="two-col"><div>
+<h3>Inventory：Ansible 的“通讯录”</h3><p>它不是单纯列 IP。它还表达主机组、组嵌套以及与主机有关的变量。Ansible 默认只会对 inventory 中能选中的目标执行任务。因此考试里第一题为什么重要？因为后面几十个 task 都建立在“目标集合选对了”这个前提上。</p>
+</div><div>
+<h3>Module：真正完成动作的“动词”</h3><p><code>user</code> 管用户，<code>yum/dnf</code> 管包，<code>file</code> 管文件对象，<code>firewalld</code> 管防火墙。你不需要背完整 YAML，只需要先会把题目里的名词翻译成模块，然后用 <code>ansible-doc -s 模块名</code> 查参数。</p>
+</div></div>
+
+<h3>Ansible 2.9 之后为什么总在讲 ansible-core 和 collection？</h3>
+<p>讲义把版本变化讲得很口语化：以前大家口中的 “Ansible” 更像一大包东西；后来核心执行引擎和大量可扩展内容逐渐拆开。你在 RHEL 9 / RHCE 9 环境里更应该形成的理解是：<strong>ansible-core 提供执行框架与核心内容，Collection 是可独立发布的一组 modules、plugins、roles。</strong>这也是为什么某些模块明明你在网上见过，考试环境里却可能暂时“没有”——不是 Ansible 不会，而是对应集合还没装。</p>
+<p>Collection 之后又引出了 FQCN（完全限定集合名），比如 <code>ansible.builtin.yum</code>。考试里短模块名经常也能用，但你要看得懂完整名字，因为帮助文档、官方示例和 collection 内容经常按 FQCN 写。</p>
+
+<h3>Navigator：把“执行 Ansible 的环境”也固定下来</h3>
+<p>讲义把 <code>ansible-navigator</code> 解释成“在容器里运行 Ansible”，这个抓法非常好。传统 <code>ansible-playbook</code> 直接使用宿主机上的 Python、Ansible、Collection；Navigator 则借助 Execution Environment 镜像，把执行工具链放到容器里。这样同一份 playbook 可以在更稳定、更可控的依赖环境中运行。你到后面会单独学它，现在先记住：<strong>Playbook 没变，换的是执行它的环境。</strong></p>
+
+<h3>安装方式：RPM、pip、源码，考试里要分清“知识”和“动作”</h3>
+<p>原讲义把 RPM、本地 ISO/网络仓库、pip、源码包都讲了。它们很适合帮助你理解 Ansible 本质上就是 Python 世界里的一个工具，但备考时没必要平均用力。RHCE 环境更重要的是确认现有的 <code>ansible-core</code>、<code>ansible-navigator</code>、system roles、collections 到底在哪里，以及配置文件实际从哪里读。</p>
+<pre><code>ansible --version
+ansible-config dump --only-changed
+ansible-config view
+ansible-doc -l | head</code></pre>
+<p>其中 <code>ansible --version</code> 很有价值，因为它会告诉你当前生效的配置文件、模块路径、collection 路径、Python 版本。出现“我明明写了配置为什么没生效”时，这个命令比盯着文件猜要高效得多。</p>
+
+<div class="precision"><b>精确一点：</b>讲义里为了帮助理解，把普通 Linux 主机上的模块执行描述为“封装 Python 脚本发送过去再执行”。这个模型对入门足够好，但别把它当成所有目标都完全一样：网络设备、<code>raw</code>、某些 action/connection plugin 的执行路径会不同。考试里不需要钻这个实现细节，你只要知道为什么大多数 Linux 管理模块依赖远端 Python，而 <code>raw</code> 可以绕过模块子系统做最底层的命令执行。</div>
+
+<h3>ansible.cfg 为什么讲义给了一个巨大的模板？</h3>
+<p>不是让你背。真正想让你看到的是：Ansible 的行为几乎都可以配置，例如 inventory、roles 路径、是否检查 host key、远程用户、Vault 密码文件、fact 收集、SSH 连接、回调插件、颜色、diff 等。考试策略是<strong>只写题目要求的最小配置</strong>，剩下使用默认值。完整模板适合作为“字典”，不适合作为背诵材料。</p>
+</div>
+<div class="exam-box"><b>考试连接：</b>这一章最直接对应模拟题第 1 题（安装与配置 Ansible），同时给第 6/7 题 Galaxy/Collection、第 13 章 Navigator 打底。考场上你真正要熟的是 <code>ansible --version</code>、项目目录、inventory、<code>ansible.cfg</code> 和连通性验证，而不是三种安装方法全部手敲一遍。</div>
+<div class="exercise"><b>随堂想一想：</b>如果你在 A 目录里运行 <code>ansible all -m ping</code> 正常，切到 B 目录后突然发现主机组不存在，你第一反应应该查什么？<details><summary>看答案</summary><p>先运行 <code>ansible --version</code> 看当前加载了哪个配置文件，再看 inventory 配置。这个问题本质上不是“网络断了”，而是“执行上下文变了”。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>01-认识 ansible
+1   ansible 特点
+ansible 特点：
+  1. 管理的设备类型多，包含云、网络设备、服务器设备（Linux、windows）、存储设备
+  2. 通过设备自带的原生态方式进行接管，不需要在被管理节点上来安装代理或者客户端软件
+  3. 无中心架构，不存在什么中心节点，换句话说安装了 ansible 工具的节点都是控制节点
+  4. ansible 仅仅是一个工具，不是什么服务，所以不需要启动服务来运行 ansible
+  5. ansible 属于模块化的自动化工具，默认是 python 开发的，支持众多的模块（ansible 支持的模块可以是其他的语言开发的）
+Ansible 是一个开源的项目，ansible 的社区也很活跃
+属于红帽旗下的开源项目，ansible 对于红帽来说非常的看重，在红帽自家的产品中很多都是使用 ansible 部署的，在红帽自家的培训课程，很多课程都是和
+ansible 相关的
+比如红帽的分布式存储产品 Ceph：使用 ansible 来自动化部署
+比如红帽的容器平台 openshift：使用 ansible 来自动化部署
+....
+RHCE（rh294 课程代码）课程全部讲的都是 ansible
+RHCA：
+     DO447 老版本
+     DO374 新版本
+       讲的都是企业级别的自动化平台 底层是 ansible 实现的
+       447：ansible automation platform 第一代的自动化平台
+       374：ansible automation platform2 第二代的自动化平台
+     RH358：服务管理（dhcp、dns、nginx、httpd、samba、varish、postfix..），然后将 ansible 怎么实现自动化管理这些服务
+     DO：DevOps
+     RH：基础架构
+     CL：云平台
+
+
+    2   ansible 架构
+
+ansible：核心工具
+inventory：文件，主机清单，ansible 只能管理主机清单中的被控节点
+modules：模块。ansible 通过调用模块来管理被控节点
+   比如调用 user 模块可以管理被控节点的用户、调用 yum 模块可以在被控节点安装软件包、调用 firewalld 模块可以管理被控节点的防护墙...
+   core-modules：核心模块，ansible 自带的模块
+   costome-modules：扩展模块，属于用户自己安装的模块，这些模块要么是第三方企业公司开发的，要么就是个人开发者开发的
+plugins：插件：对 ansible 功能的补充；比如怎么连接到被控节点的，比如执行任务的时候我想要记录它执行了什么，比如执行完任务之后我想要知道这个任
+务最终消耗了多少 CPU 内存等资源
+   连接插件
+   扩展插件
+   邮件插件
+   ...
+
+通过 playbook 在所有的被控节点实现自动创建用户和设置密码的任务
+                                                                         YAML   复制
+[root@aa ansible]# cat useradd-zhangsan.yaml
+- name: create user
+  hosts: all
+  tasks:
+  - name: create zhangsan user
+    user:
+      name: zhangsan
+      state: present
+  - name: modify user password
+    shell: echo 1 | passwd --stdin zhangsan
+
+1. 读取 playbook 中的文件，得到了要在哪些主机上执行哪些任务
+2. 读取 inventory 主机清单中的主机
+3. 将任务封装为 py 脚本文件，通过连接插件发送到被控节点
+
+4. 被控节点基于脚本文件实现任务执行，执行完成之后删除脚本文件
+5. 控制节点得到反馈信息
+
+
+3   ansible 的变化
+原来 ansible 就真的只是 ansible，不过从 ansible2.9 版本之后，ansible 不再是一个完整的 ansible 工具了
+ansible2.9 版本之后，对 ansible 进行了拆分
+拆分出来了俩个东西：
+  ansible-core：就是 ansible 工具，自带核心模块 大概 70 左右个。很多常用模块都没有，比如 firewalld 模块...
+  collection：集合，为 ansible 提供三个东西：modules、plugins、roles
+
+因为容器的兴起，现在的 ansible 也                                已经靠近了容器化，我们在红帽 9 中会学到通过容器方式来执行 ansible 任务，而这种就叫做
+ansible-navigator（导航器）
+  ansible-navigator run useradd-zhangsan.yaml —&gt;运行一个临时容器，在容器中调用 ansible 命令来执行这个 playbook 然后在被控节点执行任务
+
+
+    4   ansible 的安装
+    现在不谈容器化的 ansible（先不谈导航器）
+    看看 ansible 和 ansible-core 如何安装
+    4.1   基于 rpm 包安装
+        4.1.1   本地 ISO 镜像文件
+        RHEL9 版本携带的是 ansible-core 版本
+                                                                                                                               Bash   复制
+        [root@adsl-172-10-0-153 ~]# ansible --version
+        ansible [core 2.14.9]
+          config file = /etc/ansible/ansible.cfg
+          configured module search path = [&#x27;/root/.ansible/plugins/modules&#x27;, &#x27;/usr/share/ansible/plugins/modules&#x27;]
+          ansible python module location = /usr/lib/python3.9/site-packages/ansible
+          ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
+          executable location = /usr/bin/ansible
+          python version = 3.9.18 (main, Sep   7 2023, 00:00:00) [GCC 11.4.1 20230605 (Red Hat 11.4.1-2)] (/usr/bin/python3)
+          jinja version = 3.1.2
+          libyaml = True
+
+
+4.1.2   通过网络仓库安装 ansible-core
+网络仓库上：比如阿里云镜像站中就可以安装。网络仓库安装的 ansible-core 的同时，还会安装很多 collection，它会以依赖的方式同时安装，所以网络安装
+ansible-core 的话，携带的模块就很多
+
+https://mirrors.aliyun.com/epel-archive/9.3/Everything/x86_64/
+                                                                                                                           YAML   复制
+ [epel]
+ name=epel
+ baseurl=https://mirrors.aliyun.com/epel-archive/9.3/Everything/x86_64/
+ gpgcheck=0
+ enabled=1
+
+这里实际上提供的是 ansible 的集合，ansible-core 还是来自于本地
+你也可以选择配置红帽的网络仓库，这样的话无论是 ansible-core 还是集合都是从网络仓库安装的
+4.2   通过 pip 工具安装
+这种安装方式最简单！只需要一条命令，什么都安装好了
+pip 是 python 的包管理工具，因为 ansible 是 python 开发的，所以 pip 可以安装
+                                                                                                                           Bash   复制
+ [root@adsl-172-10-0-153 ~]# pip install ansible==2.9.0          -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+
+
+
+
+pip 工具本质上就是通过 pip 工具然后下载了 ansible 的源码包，实现了自动安装
+                                                                                                                           Bash   复制
+ [root@adsl-172-10-0-153 ~]# /usr/local/bin/ansible --version
+ ansible 2.9.0
+   config file = None
+   configured module search path = [&#x27;/root/.ansible/plugins/modules&#x27;, &#x27;/usr/share/ansible/plugins/modules&#x27;]
+   ansible python module location = /usr/local/lib/python3.9/site-packages/ansible
+   executable location = /usr/local/bin/ansible
+   python version = 3.9.18 (main, Sep       7 2023, 00:00:00) [GCC 11.4.1 20230605 (Red Hat 11.4.1-2)]
+
+pip 安装的 ansible 没有配置文件模板
+在网络上去找 ansible.cfg 配置文件模板
+
+
+4.3   通过 ansible 源码包实现安装
+ansible 的源码包在俩个地方可以下载到：
+
+ https://releases.ansible.com/：下载的 ansible 源码包只维护到 2.9 版本
+ https://github.com/ansible/ansible：下载任意版本的 ansible 源码包
+我告诉大家，这里的源码包安装依旧需要从网上下载依赖软件
+                                                                                   Bash   复制
+ wget https://releases.ansible.com/ansible/ansible-2.9.0.tar.gz
+
+
+
+
+build 构建、install 安装
+                                                                                 Python   复制
+ python setup.py build
+ python setup.py install
+
+
+
+源码包安装之后，默认没有配置文件。提供了配置文件模板在目录下
+                                                                                   Bash   复制
+ [root@adsl-172-10-0-153 ansible-2.9.0]# ls
+ bin           COPYING    hacking    MANIFEST.in   requirements.txt     test
+ build         dist       lib        packaging     setup.py
+ changelogs    docs       licenses   PKG-INFO      shippable.yml
+ contrib       examples   Makefile   README.rst    SYMLINK_CACHE.json
+ [root@adsl-172-10-0-153 ansible-2.9.0]# ls examples/
+ ansible.cfg   hosts     scripts
+ [root@adsl-172-10-0-153 ansible-2.9.0]# vim examples/ansible.cfg
+
+
+
+4.4    ansible.cfg 配置文件模板（2.9.0 版本）
+                                                                               Markdown   复制
+ # config file for ansible -- https://ansible.com/
+ # ===============================================
+
+
+ # nearly all parameters can be overridden in ansible-playbook
+ # or with command line flags. ansible will read ANSIBLE_CONFIG,
+ # ansible.cfg in the current working directory, .ansible.cfg in
+ # the home directory or /etc/ansible/ansible.cfg, whichever it
+ # finds first
+
+
+ [defaults]
+
+
+ # some basic default values...
+
+
+ #inventory      = /etc/ansible/hosts
+ #library        = /usr/share/my_modules/
+ #module_utils   = /usr/share/my_module_utils/
+ #remote_tmp     = ~/.ansible/tmp
+ #local_tmp      = ~/.ansible/tmp
+ #plugin_filters_cfg = /etc/ansible/plugin_filters.yml
+ #forks          = 5
+ #poll_interval = 15
+ #sudo_user      = root
+ #ask_sudo_pass = True
+ #ask_pass      = True
+ #transport      = smart
+ #remote_port    = 22
+ #module_lang    = C
+ #module_set_locale = False
+
+
+ # plays will gather facts by default, which contain information about
+ # the remote system.
+ #
+ # smart - gather by default, but don&#x27;t regather if already gathered
+ # implicit - gather by default, turn off with gather_facts: False
+ # explicit - do not gather by default, must say gather_facts: True
+ #gathering = implicit
+
+# This only affects the gathering done by a play&#x27;s gather_facts directive,
+# by default gathering retrieves all facts subsets
+# all - gather all subsets
+# network - gather min and network facts
+# hardware - gather hardware facts (longest facts to retrieve)
+# virtual - gather min and virtual facts
+# facter - import facts from facter
+# ohai - import facts from ohai
+# You can combine them using comma (ex: network,virtual)
+# You can negate them using ! (ex: !hardware,!facter,!ohai)
+# A minimal set of facts is always gathered.
+#gather_subset = all
+
+
+# some hardware related facts are collected
+# with a maximum timeout of 10 seconds. This
+# option lets you increase or decrease that
+# timeout to something more suitable for the
+# environment.
+# gather_timeout = 10
+
+
+# Ansible facts are available inside the ansible_facts.* dictionary
+# namespace. This setting maintains the behaviour which was the default prior
+# to 2.5, duplicating these variables into the main namespace, each with a
+# prefix of &#x27;ansible_&#x27;.
+# This variable is set to True by default for backwards compatibility. It
+# will be changed to a default of &#x27;False&#x27; in a future release.
+# ansible_facts.
+# inject_facts_as_vars = True
+
+
+# additional paths to search for roles in, colon separated
+#roles_path      = /etc/ansible/roles
+
+# uncomment this to disable SSH key host checking
+#host_key_checking = False
+
+
+# change the default callback, you can only have one &#x27;stdout&#x27; type    enabled at a time.
+#stdout_callback = skippy
+
+
+
+## Ansible ships with some plugins that require whitelisting,
+## this is done to avoid running all of a type by default.
+## These setting lists those that you want enabled for your system.
+## Custom plugins should not need this unless plugin author specifies it.
+
+
+# enable callback plugins, they can output to stdout but cannot be &#x27;stdout&#x27; type.
+#callback_whitelist = timer, mail
+
+
+# Determine whether includes in tasks and handlers are &quot;static&quot; by
+# default. As of 2.0, includes are dynamic by default. Setting these
+# values to True will make includes behave more like they did in the
+# 1.x versions.
+#task_includes_static = False
+#handler_includes_static = False
+
+
+# Controls if a missing handler for a notification event is an error or a warning
+#error_on_missing_handler = True
+
+
+# change this for alternative sudo implementations
+#sudo_exe = sudo
+
+
+# What flags to pass to sudo
+# WARNING: leaving out the defaults might create unexpected behaviours
+#sudo_flags = -H -S -n
+
+
+# SSH timeout
+#timeout = 10
+
+
+# default user to use for playbooks if user is not specified
+# (/usr/bin/ansible will use current user as default)
+#remote_user = root
+
+# logging is off by default unless this path is defined
+# if so defined, consider logrotate
+#log_path = /var/log/ansible.log
+
+
+# default module name for /usr/bin/ansible
+#module_name = command
+
+
+# use this shell for commands executed under sudo
+# you may need to change this to bin/bash in rare instances
+# if sudo is constrained
+#executable = /bin/sh
+
+
+# if inventory variables overlap, does the higher precedence one win
+# or are hash values merged together?   The default is &#x27;replace&#x27; but
+# this can also be set to &#x27;merge&#x27;.
+#hash_behaviour = replace
+
+
+# by default, variables from roles will be visible in the global variable
+# scope. To prevent this, the following option can be enabled, and only
+# tasks and handlers within the role will see the variables there
+#private_role_vars = yes
+
+
+# list any Jinja2 extensions to enable here:
+#jinja2_extensions = jinja2.ext.do,jinja2.ext.i18n
+
+
+# if set, always use this private key file for authentication, same as
+# if passing --private-key to ansible or ansible-playbook
+#private_key_file = /path/to/file
+
+
+# If set, configures the path to the Vault password file as an alternative to
+# specifying --vault-password-file on the command line.
+#vault_password_file = /path/to/vault_password_file
+
+
+# format of string {{ ansible_managed }} available within Jinja2
+# templates indicates to users editing templates files will be replaced.
+# replacing {file}, {host} and {uid} and strftime codes with proper values.
+#ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
+# {file}, {host}, {uid}, and the timestamp can all interfere with idempotence
+# in some situations so the default is a static string:
+#ansible_managed = Ansible managed
+
+
+# by default, ansible-playbook will display &quot;Skipping [host]&quot; if it determines a task
+# should not be run on a host.  Set this to &quot;False&quot; if you don&#x27;t want to see these &quot;Skipping&quot;
+# messages. NOTE: the task header will still be shown regardless of whether or not the
+# task is skipped.
+#display_skipped_hosts = True
+
+
+# by default, if a task in a playbook does not include a name: field then
+# ansible-playbook will construct a header that includes the task&#x27;s action but
+# not the task&#x27;s args.  This is a security feature because ansible cannot know
+# if the *module* considers an argument to be no_log at the time that the
+# header is printed. If your environment doesn&#x27;t have a problem securing
+# stdout from ansible-playbook (or you have manually specified no_log in your
+# playbook on all of the tasks where you have secret information) then you can
+# safely set this to True to get more informative messages.
+#display_args_to_stdout = False
+
+
+# by default (as of 1.3), Ansible will raise errors when attempting to dereference
+# Jinja2 variables that are not set in templates or action lines. Uncomment this line
+# to revert the behavior to pre-1.3.
+#error_on_undefined_vars = False
+
+
+# by default (as of 1.6), Ansible may display warnings based on the configuration of the
+# system running ansible itself. This may include warnings about 3rd party packages or
+# other conditions that should be resolved if possible.
+# to disable these warnings, set the following value to False:
+#system_warnings = True
+
+
+# by default (as of 1.4), Ansible may display deprecation warnings for language
+
+# features that should no longer be used and will be removed in future versions.
+# to disable these warnings, set the following value to False:
+#deprecation_warnings = True
+
+
+# (as of 1.8), Ansible can optionally warn when usage of the shell and
+# command module appear to be simplified by using a default Ansible module
+# instead.  These warnings can be silenced by adjusting the following
+# setting or adding warn=yes or warn=no to the end of the command line
+# parameter string. This will for example suggest using the git module
+# instead of shelling out to the git command.
+# command_warnings = False
+
+
+
+# set plugin path directories here, separate with colons
+#action_plugins     = /usr/share/ansible/plugins/action
+#become_plugins     = /usr/share/ansible/plugins/become
+#cache_plugins      = /usr/share/ansible/plugins/cache
+#callback_plugins   = /usr/share/ansible/plugins/callback
+#connection_plugins = /usr/share/ansible/plugins/connection
+#lookup_plugins     = /usr/share/ansible/plugins/lookup
+#inventory_plugins = /usr/share/ansible/plugins/inventory
+#vars_plugins       = /usr/share/ansible/plugins/vars
+#filter_plugins     = /usr/share/ansible/plugins/filter
+#test_plugins       = /usr/share/ansible/plugins/test
+#terminal_plugins   = /usr/share/ansible/plugins/terminal
+#strategy_plugins   = /usr/share/ansible/plugins/strategy
+
+
+# by default, ansible will use the &#x27;linear&#x27; strategy but you may want to try
+# another one
+#strategy = free
+
+
+# by default callbacks are not loaded for /bin/ansible, enable this if you
+# want, for example, a notification or logging callback to also apply to
+# /bin/ansible runs
+#bin_ansible_callbacks = False
+
+
+
+# don&#x27;t like cows?  that&#x27;s unfortunate.
+# set to 1 if you don&#x27;t want cowsay support or export ANSIBLE_NOCOWS=1
+#nocows = 1
+
+
+# set which cowsay stencil you&#x27;d like to use by default. When set to &#x27;random&#x27;,
+# a random stencil will be selected for each task. The selection will be filtered
+# against the `cow_whitelist` option below.
+#cow_selection = default
+#cow_selection = random
+
+
+# when using the &#x27;random&#x27; option for cowsay, stencils will be restricted to this list.
+# it should be formatted as a comma-separated list with no spaces between names.
+# NOTE: line continuations here are for formatting purposes only, as the INI parser
+#       in python does not support them.
+#cow_whitelist=bud-frogs,bunny,cheese,daemon,default,dragon,elephant-in-snake,elephant,eyes,\
+#              hellokitty,kitty,luke-koala,meow,milk,moofasa,moose,ren,sheep,small,stegosaurus,\
+#              stimpy,supermilker,three-eyes,turkey,turtle,tux,udder,vader-koala,vader,www
+
+# don&#x27;t like colors either?
+# set to 1 if you don&#x27;t want colors, or export ANSIBLE_NOCOLOR=1
+#nocolor = 1
+
+
+# if set to a persistent type (not &#x27;memory&#x27;, for example &#x27;redis&#x27;) fact values
+# from previous runs in Ansible will be stored.  This may be useful when
+# wanting to use, for example, IP information from one group of servers
+# without having to talk to them in the same playbook run to get their
+# current IP information.
+#fact_caching = memory
+
+
+#This option tells Ansible where to cache facts. The value is plugin dependent.
+#For the jsonfile plugin, it should be a path to a local directory.
+#For the redis plugin, the value is a host:port:database triplet: fact_caching_connection = localhost:6379:0
+
+#fact_caching_connection=/tmp
+
+
+
+
+# retry files
+# When a playbook fails a .retry file can be created that will be placed in ~/
+# You can enable this feature by setting retry_files_enabled to True
+# and you can change the location of the files by setting retry_files_save_path
+
+
+#retry_files_enabled = False
+#retry_files_save_path = ~/.ansible-retry
+
+
+# squash actions
+# Ansible can optimise actions that call modules with list parameters
+# when looping. Instead of calling the module once per with_ item, the
+# module is called once with all items at once. Currently this only works
+# under limited circumstances, and only with parameters named &#x27;name&#x27;.
+#squash_actions = apk,apt,dnf,homebrew,pacman,pkgng,yum,zypper
+
+
+# prevents logging of task data, off by default
+#no_log = False
+
+
+# prevents logging of tasks, but only on the targets, data is still logged on the master/controller
+#no_target_syslog = False
+
+
+# controls whether Ansible will raise an error or warning if a task has no
+# choice but to create world readable temporary files to execute a module on
+# the remote machine.  This option is False by default for security. Users may
+# turn this on to have behaviour more like Ansible prior to 2.1.x. See
+# https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user
+# for more secure ways to fix this than enabling this option.
+#allow_world_readable_tmpfiles = False
+
+
+# controls the compression level of variables sent to
+# worker processes. At the default of 0, no compression
+# is used. This value must be an integer from 0 to 9.
+#var_compression_level = 9
+
+
+# controls what compression method is used for new-style ansible modules when
+# they are sent to the remote system.  The compression types depend on having
+# support compiled into both the controller&#x27;s python and the client&#x27;s python.
+# The names should match with the python Zipfile compression types:
+# * ZIP_STORED (no compression. available everywhere)
+# * ZIP_DEFLATED (uses zlib, the default)
+# These values may be set per host via the ansible_module_compression inventory
+# variable
+#module_compression = &#x27;ZIP_DEFLATED&#x27;
+
+
+# This controls the cutoff point (in bytes) on --diff for files
+# set to 0 for unlimited (RAM may suffer!).
+#max_diff_size = 1048576
+
+
+# This controls how ansible handles multiple --tags and --skip-tags arguments
+# on the CLI.  If this is True then multiple arguments are merged together. If
+# it is False, then the last specified argument is used and the others are ignored.
+# This option will be removed in 2.8.
+#merge_multiple_cli_flags = True
+
+
+# Controls showing custom stats at the end, off by default
+#show_custom_stats = True
+
+
+# Controls which files to ignore when using a directory as inventory with
+# possibly multiple sources (both static and dynamic)
+#inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
+
+
+# This family of modules use an alternative execution path optimized for network appliances
+# only update this setting if you know how this works, otherwise it can break module execution
+#network_group_modules=eos, nxos, ios, iosxr, junos, vyos
+
+# When enabled, this option allows lookups (via variables like {{lookup(&#x27;foo&#x27;)}} or when used as
+# a loop with `with_foo`) to return data that is not marked &quot;unsafe&quot;. This means the data may contain
+# jinja2 templating language which will be run through the templating engine.
+# ENABLING THIS COULD BE A SECURITY RISK
+#allow_unsafe_lookups = False
+
+
+# set default errors for all plays
+#any_errors_fatal = False
+
+
+[inventory]
+# enable inventory plugins, default: &#x27;host_list&#x27;, &#x27;script&#x27;, &#x27;auto&#x27;, &#x27;yaml&#x27;, &#x27;ini&#x27;, &#x27;toml&#x27;
+#enable_plugins = host_list, virtualbox, yaml, constructed
+
+
+# ignore these extensions when parsing a directory as inventory source
+#ignore_extensions = .pyc, .pyo, .swp, .bak, ~, .rpm, .md, .txt, ~, .orig, .ini, .cfg, .retry
+
+
+# ignore files matching these patterns when parsing a directory as inventory source
+#ignore_patterns=
+
+
+# If &#x27;true&#x27; unparsed inventory sources become fatal errors, they are warnings otherwise.
+#unparsed_is_failed=False
+
+
+[privilege_escalation]
+#become=True
+#become_method=sudo
+#become_user=root
+#become_ask_pass=False
+
+
+[paramiko_connection]
+
+
+# uncomment this line to cause the paramiko connection plugin to not record new host
+# keys encountered.  Increases performance on new host additions.   Setting works independently of the
+# host key checking setting above.
+#record_host_keys=False
+
+
+# by default, Ansible requests a pseudo-terminal for commands executed under sudo. Uncomment this
+# line to disable this behaviour.
+#pty=False
+
+
+# paramiko will default to looking for SSH keys initially when trying to
+# authenticate to remote devices.  This is a problem for some network devices
+# that close the connection after a key failure. Uncomment this line to
+# disable the Paramiko look for keys function
+#look_for_keys = False
+
+
+# When using persistent connections with Paramiko, the connection runs in a
+# background process.  If the host doesn&#x27;t already have a valid SSH key, by
+# default Ansible will prompt to add the host key. This will cause connections
+# running in background processes to fail. Uncomment this line to have
+# Paramiko automatically add host keys.
+#host_key_auto_add = True
+
+
+[ssh_connection]
+
+
+# ssh arguments to use
+# Leaving off ControlPersist will result in poor performance, so use
+# paramiko on older platforms rather than removing it, -C controls compression use
+#ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s
+
+
+# The base directory for the ControlPath sockets.
+# This is the &quot;%(directory)s&quot; in the control_path option
+#
+# Example:
+# control_path_dir = /tmp/.ansible/cp
+#control_path_dir = ~/.ansible/cp
+
+
+# The path to use for the ControlPath sockets. This defaults to a hashed string of the hostname,
+# port and username (empty string in the config). The hash mitigates a common problem users
+# found with long hostnames and the conventional %(directory)s/ansible-ssh-%%h-%%p-%%r format.
+# In those cases, a &quot;too long for Unix domain socket&quot; ssh error would occur.
+
+#
+# Example:
+# control_path = %(directory)s/%%h-%%r
+#control_path =
+
+
+# Enabling pipelining reduces the number of SSH operations required to
+# execute a module on the remote server. This can result in a significant
+# performance improvement when enabled, however when using &quot;sudo:&quot; you must
+# first disable &#x27;requiretty&#x27; in /etc/sudoers
+#
+# By default, this option is disabled to preserve compatibility with
+# sudoers configurations that have requiretty (the default on many distros).
+#
+#pipelining = False
+
+
+# Control the mechanism for transferring files (old)
+#   * smart = try sftp and then try scp [default]
+#   * True = use scp only
+#   * False = use sftp only
+#scp_if_ssh = smart
+
+
+# Control the mechanism for transferring files (new)
+# If set, this will override the scp_if_ssh option
+#   * sftp = use sftp to transfer files
+#   * scp = use scp to transfer files
+#   * piped = use &#x27;dd&#x27; over SSH to transfer files
+#   * smart = try sftp, scp, and piped, in that order [default]
+#transfer_method = smart
+
+
+# if False, sftp will not use batch mode to transfer files. This may cause some
+# types of file transfer failures impossible to catch however, and should
+# only be disabled if your sftp version has problems with batch mode
+#sftp_batch_mode = False
+
+
+# The -tt argument is passed to ssh when pipelining is not enabled because sudo
+# requires a tty by default.
+#usetty = True
+
+
+# Number of times to retry an SSH connection to a host, in case of UNREACHABLE.
+# For each retry attempt, there is an exponential backoff,
+# so after the first attempt there is 1s wait, then 2s, 4s etc. up to 30s (max).
+#retries = 3
+
+
+[persistent_connection]
+
+
+# Configures the persistent connection timeout value in seconds.  This value is
+# how long the persistent connection will remain idle before it is destroyed.
+# If the connection doesn&#x27;t receive a request before the timeout value
+# expires, the connection is shutdown. The default value is 30 seconds.
+#connect_timeout = 30
+
+
+# The command timeout value defines the amount of time to wait for a command
+# or RPC call before timing out. The value for the command timeout must
+# be less than the value of the persistent connection idle timeout (connect_timeout)
+# The default value is 30 second.
+#command_timeout = 30
+
+
+[accelerate]
+#accelerate_port = 5099
+#accelerate_timeout = 30
+#accelerate_connect_timeout = 5.0
+
+
+# The daemon timeout is measured in minutes. This time is measured
+# from the last activity to the accelerate daemon.
+#accelerate_daemon_timeout = 30
+
+
+# If set to yes, accelerate_multi_key will allow multiple
+# private keys to be uploaded to it, though each user must
+# have access to the system via SSH to add a new key. The default
+# is &quot;no&quot;.
+
+#accelerate_multi_key = yes
+
+
+[selinux]
+# file systems that require special treatment when dealing with security context
+# the default behaviour that copies the existing context or uses the user default
+# needs to be changed to use the file system dependent context.
+#special_context_filesystems=nfs,vboxsf,fuse,ramfs,9p,vfat
+
+
+# Set this to yes to allow libvirt_lxc connections to work without SELinux.
+#libvirt_lxc_noseclabel = yes
+
+
+[colors]
+#highlight = white
+#verbose = blue
+#warn = bright purple
+#error = red
+#debug = dark gray
+#deprecate = purple
+#skip = cyan
+#unreachable = red
+#ok = green
+#changed = yellow
+#diff_add = green
+#diff_remove = red
+#diff_lines = cyan
+
+
+
+[diff]
+# Always print diff when running ( same as always running with -D/--diff )
+#   l
+
+</pre></details>
+</section><section class="chapter searchable" id="ch02" data-title="Ansible 配置和使用">
+<div class="chapter-head"><div class="chapter-no">02</div><div><h2>Ansible 配置和使用</h2><p>这一章要把“我是谁、我要连谁、连上去以后以谁的身份做事”彻底分开。很多初学者所有配置混在一起，错就错在这里。</p></div><label class="chapter-check"><input type="checkbox" data-progress="02"> 学完</label></div>
+
+<div class="lecture">
+<p><code>ansible.cfg</code> 其实是在给执行器一个默认工作环境。讲义先抓了最常见的几项：inventory 在哪、是否询问 SSH 密码、默认远程用户是谁、是否做 host key 检查、roles/collections 去哪里找，以及 privilege escalation（提权）怎么做。</p>
+<div class="model"><div class="model-title">远程执行的两个身份不要混</div><div class="flow"><span>控制端当前用户</span><b>→</b><span>remote_user / ansible_user 登录远端</span><b>→</b><span>become</span><b>→</b><span>become_user（常见 root）执行任务</span></div></div>
+<p>比如讲义配置里 <code>remote_user = devops</code>，又在 <code>[privilege_escalation]</code> 中写 <code>become=True</code>、<code>become_user=root</code>。它表达的是：SSH 先以 devops 登录，再通过 sudo 变成 root 做管理任务。这个区分非常重要，因为考试中“SSH 连不上”和“sudo 提权失败”是两类完全不同的问题。</p>
+<pre><code>[defaults]
+inventory = /etc/ansible/hosts
+ask_pass = False
+remote_user = devops
+
+[privilege_escalation]
+become = True
+become_method = sudo
+become_user = root
+become_ask_pass = False</code></pre>
+<p>讲义随后演示了先用 root + 密码把 devops 用户、密码和 sudo 权限准备好，再切回正常配置使用。这段的教学目的不是鼓励你长期用 shell 去改 sudoers，而是让你看到<strong>Ansible 自己也需要“可连接、可提权”的先决条件</strong>。正式 RHCE 实验环境很多前置工作通常已经准备好，不要把课堂搭环境的步骤和考试作答步骤混为一谈。</p>
+
+<h3>配置文件优先级：这是非常容易被忽略的排错知识</h3>
+<p>讲义给出的顺序是：<code>ANSIBLE_CONFIG</code> 环境变量 → 当前目录 <code>ansible.cfg</code> → 用户家目录 <code>~/.ansible.cfg</code> → <code>/etc/ansible/ansible.cfg</code>。你不用每天背，但一定要知道“当前目录配置的优先级很高”。所以项目化做题时把 <code>ansible.cfg</code> 放在题目规定的项目目录里，是最稳妥的。</p>
+<p>当你怀疑配置读错，别凭感觉：<code>ansible --version</code> 会显示 config file；<code>ansible-config dump --only-changed</code> 可以看非默认配置。</p>
+
+<h3>Inventory：先学表达集合，再学写 YAML</h3>
+<p>讲义从最简单的主机、主机组、ungrouped，到范围写法、children 嵌套，再到运行时选择主机。你可以把 inventory 理解成一张“集合关系图”。例如 <code>[webservers]</code> 是一个集合；<code>[servers:children]</code> 表示 servers 这个大集合由其他组组成。</p>
+<pre><code>[webservers]
+web1
+web2
+
+[mysqlservers]
+db1
+
+[servers:children]
+webservers
+mysqlservers</code></pre>
+<p>考试里的 <code>prod</code> 作为 <code>webservers</code> 的 child 就是这个模型。你不需要把一台机器在多个地方复制来复制去，组嵌套能让“角色集合”更清楚。</p>
+
+<h3>主机选择模式：把它当成集合运算</h3>
+<p><code>all</code> 是全集；一个组名是子集；逗号可以选择多个模式；通配符和正则可以匹配名称。实际备考中我建议你在执行修改性任务前养成一个动作：先 <code>--list-hosts</code>。尤其是组嵌套题，先确认你选中的到底是谁，再执行。</p>
+<pre><code>ansible all --list-hosts
+ansible webservers --list-hosts
+ansible 'web*' --list-hosts
+ansible '~^m|^w' --list-hosts</code></pre>
+<div class="precision"><b>精确一点：</b>讲义中提到“主机和主机组同时存在时，主机写在主机组上面”。真正重要的是 inventory 的 INI 语法边界：在一个 <code>[group]</code> 标题之后的主机都属于该组，直到下一个 section。所谓“写在上面”是在提醒你别无意中把裸主机放进前一个组里。</div>
+</div>
+<div class="exam-box"><b>考试连接：</b>模拟题第 1 题会要求你建立 dev/test/prod/balancers/webservers 等组，并设置 role/collection 搜索路径。这题应该练到“零思考”。它不是一个孤立分值，而是后面所有 <code>hosts:</code> 的路由表。</div>
+<div class="exercise"><b>随堂小测：</b>题目说“serverc、serverd 属于 prod；prod 又属于 webservers”。你会如何写 inventory？写完用什么命令确认 webservers 里确实有两台？<details><summary>参考答案</summary><pre><code>[prod]
+serverc
+serverd
+
+[webservers:children]
+prod
+
+ansible webservers --list-hosts</code></pre></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>02-ansible 配置和使用
+1   ansible 配置文件
+定义了主机清单位置、角色位置、集合位置
+定义了远程连接被控节点执行任务的用户、在被控节点执行任务的时候是否要提权、远程连接被控主机的默认 SSH 端口
+                                                                                                         Ini   复制
+[root@adsl-172-10-0-153 ansible]# grep -v ^# ansible.cfg   | grep -v ^$
+[defaults]
+    inventory：主机清单位置
+    ask_pass：定义主控连接被控节点的方式，是基于密码认证还是基于密钥认证
+    remote_user：定义连接被控节点的哪个用户。最终执行任务的用户是谁
+    host_key_checking：是否检查被控节点的主机公钥，如果是基于密钥认证的话，我建议关掉它
+    roles_path：定义角色的搜索路径，后面会用到
+    collection_path：定义集合的搜索路径，后面会用到（只有ansible-core才会有有效果）
+[inventory]
+[privilege_escalation]    定义连接被控节点的用户是否要提权
+    become：是否提权
+    become_method：提权方式
+    become_user：提权到哪个用户
+    become_ask_pass：提权的时候是否需要验证
+[paramiko_connection]
+[ssh_connection]
+[persistent_connection]
+[accelerate]
+[selinux]
+[colors]
+[diff]
+
+
+
+
+#控制节点的 ansible.cfg 配置文件
+                                                                                                       YAML    复制
+[root@adsl-172-10-0-153 ansible]# cat ansible.cfg
+[defaults]
+inventory       = /etc/ansible/hosts
+ask_pass        = False
+remote_user = devops
+#host_key_checking=False
+[privilege_escalation]
+become=True
+become_method=sudo
+become_user=root
+become_ask_pass=False
+
+需要在被控节点执行一些操作：
+ 1. 创建 devops 用户并且设置密码
+ 2. 给 devops 用户配置 sudo 提权
+                                                                                                       Bash    复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m shell -a &#x27;useradd devops&#x27; -uroot -k
+SSH password:
+node1 | CHANGED | rc=0 &gt;&gt;
+
+
+node2 | CHANGED | rc=0 &gt;&gt;
+
+                                                                                                       Bash    复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m shell -a &#x27;echo 1 | passwd --stdin devops&#x27; -uroot -k
+SSH password:
+node1 | CHANGED | rc=0 &gt;&gt;
+Changing password for user devops.
+passwd: all authentication tokens updated successfully.
+
+node2 | CHANGED | rc=0 &gt;&gt;
+Changing password for user devops.
+passwd: all authentication tokens updated successfully.
+                                                                                                                        Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m shell -a &#x27;echo &quot;devops ALL=(ALL) NOPASSWD:ALL&quot; &gt;&gt; /etc/sudoers&#x27; -uroot -k
+SSH password:
+node2 | CHANGED | rc=0 &gt;&gt;
+
+
+
+node1 | CHANGED | rc=0 &gt;&gt;
+
+                                                                                                                        Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m shell -a &#x27;echo redhat&#x27;
+node2 | CHANGED | rc=0 &gt;&gt;
+redhat
+
+
+node1 | CHANGED | rc=0 &gt;&gt;
+redhat
+
+                                                                                                                        YAML   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m ping
+node2 | SUCCESS =&gt; {
+      &quot;ansible_facts&quot;: {
+           &quot;discovered_interpreter_python&quot;: &quot;/usr/bin/python&quot;
+      },
+      &quot;changed&quot;: false,
+      &quot;ping&quot;: &quot;pong&quot;
+}
+node1 | SUCCESS =&gt; {
+      &quot;ansible_facts&quot;: {
+           &quot;discovered_interpreter_python&quot;: &quot;/usr/bin/python&quot;
+      },
+      &quot;changed&quot;: false,
+      &quot;ping&quot;: &quot;pong&quot;
+}
+
+
+
+
+2   ansible 配置文件优先级
+ansible 配置文件可以存到不同的地方，具备优先级的概念：
+ 1. 环境变量：ANSIBLE_CONFIG
+ 2. 当前目录下的 ansible.cfg
+ 3. 当前用户家目录下的.ansible.cfg
+ 4. /etc/ansible/ansible.cfg
+
+
+3   定义主机清单中主机的方式
+3.1   直接定义主机
+    基于 IP 地址 定义
+    基于主机名定义
+                                                                                                                        YAML   复制
+#/etc/ansible/hosts
+node1
+node2
+192.168.1.1
+192.168.1.2
+
+3.2   定义主机组
+主机组是多个主机的集合，在这台主机组上执行任务实际上就相当于在这些主机上执行任务
+
+
+
+
+                                                       Ini   复制
+[webservers]
+web1
+web2
+
+定义主机组和主机的时候，如果他们同时存在，请你一定要保证主机是写主机组的上面的！
+3.3   定义特殊的主机组（ungroup）
+ungroup 实际上就是不属于任何主机组的主机，就相当于你直接定义主机
+                                                 Markdown    复制
+[ungroup]
+abc
+
+
+
+
+3.4   批量定义主机
+                                                 Markdown    复制
+web[1:10].example.com
+192.168.1.[1:10]
+
+
+
+
+3.5   定义主机组嵌套
+                                                    YAML     复制
+[servers:children]
+webservers
+mysqlservers
+
+
+
+
+4   选择主机清单中的主机
+    列出主机清单中的主机
+                                                     Bash    复制
+      ansible all --list-hosts
+
+
+
+
+    执行任务的时候选择主机清单中的主机
+                                                     Bash    复制
+      ansible all -m shell -a &#x27;useradd devops&#x27;
+
+1. 选择所有的主机
+                                                 Bash   复制
+  ansible all --list-hosts
+
+
+
+
+2. 选择指定主机或者主机组
+                                                 Bash   复制
+  ansible node1 --list-hosts
+
+
+  ansible webservers --list-hosts
+
+3. 批量选择主机和主机组
+                                                 Bash   复制
+  ansible webservers,mysqlservers --list-hosts
+
+
+  ansible node1,node2 --list-hosts
+
+4. 支持正则表达式来选择主机
+                                                 Bash   复制
+  ansible &#x27;~^m|^w&#x27; --list-hosts
+
+
+
+
+5. 支持通配符来选择主机
+                                                 Bash   复制
+  ansible &#x27;web*&#x27; --list-hosts
+
+
+
+
+6. 选择不属于任何主机组的主机
+                                                 Bash   复制
+  ansible ungrouped --list-hosts
+
+</pre></details>
+</section><section class="chapter searchable" id="ch03" data-title="Ad-hoc 与常用模块">
+<div class="chapter-head"><div class="chapter-no">03</div><div><h2>Ad-hoc 与常用模块</h2><p>这一章看起来模块很多，容易产生“全都要背”的压迫感。其实你只需要建立“题目关键词 → 模块”的索引，然后学会现场查参数。</p></div><label class="chapter-check"><input type="checkbox" data-progress="03"> 学完</label></div>
+
+<div class="lecture">
+<p>Ad-hoc 可以把它理解成“Ansible 的单行命令模式”：一次临时调用一个模块，适合检查、验证、做简单一次性操作。Playbook 则像可保存、可复跑、可组合控制流的脚本/配置。考试真正评分的主体通常是你保存下来的 playbook，但 ad-hoc 是非常好的<strong>验证和排错工具</strong>。</p>
+<pre><code>ansible 主机或组 -m 模块 -a '模块参数' [选项]
+ansible all -m ping
+ansible webservers -m shell -a 'rpm -q httpd'</code></pre>
+
+<h3>先理解幂等性，再决定什么时候用 shell</h3>
+<p>讲义把命令执行模块和其他管理模块的差别概括成“命令执行模块不具备幂等性”。这个说法抓住了考试最重要的一点：如果你写 <code>shell: useradd lisi</code>，第二次跑可能失败；如果写 <code>user: name=lisi state=present</code>，第二次会发现目标状态已经满足，通常返回 ok。RHCE 的评分会重放 playbook，所以<strong>优先选择描述状态的专用模块</strong>，而不是把 RHCSA 命令原封不动塞进 shell。</p>
+<p>不过也别把规则绝对化。<code>shell</code>/<code>command</code> 可以借助 <code>creates</code>、<code>removes</code> 或合适的 <code>changed_when</code> 做得更可控，但在考试里，如果有专用模块，优先专用模块通常最稳。</p>
+
+<h3>command / shell / raw / script 怎么选</h3>
+<table><tr><th>模块</th><th>你可以这样记</th><th>关键差异</th></tr>
+<tr><td><code>command</code></td><td>执行普通命令</td><td>不经过 shell 解释，因此管道、重定向等 shell 语法不能直接用。</td></tr>
+<tr><td><code>shell</code></td><td>确实需要 <code>| &gt; &&</code> 等 shell 能力</td><td>通过 shell 执行；更灵活，也更容易写出非幂等任务。</td></tr>
+<tr><td><code>raw</code></td><td>连 Python 都没有的极简目标</td><td>绕过通常的模块执行路径，直接发送命令；常用于 bootstrap。</td></tr>
+<tr><td><code>script</code></td><td>已有本地脚本，想在远端跑</td><td>更精确地说，Ansible 会把控制端脚本传到远端临时位置再执行；这点比“只读取脚本命令”更准确。</td></tr></table>
+
+<h3>文件对象：file / copy / fetch</h3>
+<p><code>file</code> 管的是“文件对象状态”：存在、目录、touch、链接、权限、属主属组、删除。<code>copy</code> 管的是“把字节或内容放过去”；<code>fetch</code> 是“把远端普通文件拉回来”。这三个模块不要混成一个“文件模块”。</p>
+<pre><code># 创建目录
+ansible all -m file -a 'path=/opt/dir state=directory'
+
+# 创建软链接
+ansible node1 -m file -a 'src=/etc/passwd dest=/opt/passwd state=link'
+
+# 控制端文件推送到远端
+ansible all -m copy -a 'src=/etc/passwd dest=/tmp/ backup=true'
+
+# 直接生成内容
+ansible all -m copy -a 'content="httpd index\n" dest=/var/www/html/index.html'
+
+# 拉回远端普通文件
+ansible all -m fetch -a 'src=/etc/passwd dest=/opt/'</code></pre>
+<p>讲义提醒 <code>fetch flat=true</code> 时，如果 dest 是目录，末尾 <code>/</code> 很关键。还有一个考试思维：<code>file</code> 的 <code>path</code> 不是 shell glob，它不会像 <code>rm /tmp/*</code> 那样自动展开批量目标。批量对象应该用 loop，或者先用 find 取得列表。</p>
+
+<h3>软件仓库与软件包：yum_repository + yum/dnf</h3>
+<p><code>yum_repository</code> 把一个 repo stanza 变成模块参数：<code>name</code> 是仓库 ID，<code>description</code> 对应显示名称，<code>baseurl</code> 是地址，<code>enabled</code>/<code>gpgcheck</code>/<code>gpgkey</code> 对应仓库策略，<code>file</code> 决定写到哪个 <code>.repo</code> 文件。模拟题第 2 题几乎就是把题面字段逐项映射成这些参数。</p>
+<p><code>yum</code>（在新环境也常见 <code>dnf</code>）则负责包、包组和更新：<code>present</code> 安装、<code>latest</code> 更新、<code>absent</code> 卸载；包组可以写 <code>@Development Tools</code>。</p>
+
+<h3>服务：service 与 systemd</h3>
+<p>两者都能做启动、停止、重启、reload、enabled。讲义特别提了 <code>systemd</code> 的 <code>daemon_reload</code>：当你改的是 systemd unit 本身时，systemd 需要重新加载 unit 定义。别把“改了任意服务配置文件”都机械地套 daemon-reload；只有 unit 配置发生变化才需要这一步，而像改 <code>httpd.conf</code> 通常是 reload/restart 服务。</p>
+
+<h3>用户与组：user / group</h3>
+<p>这两个模块基本就是把 RHCSA 的 <code>useradd/usermod/userdel</code> 和 <code>groupadd/groupmod/groupdel</code> 转成声明式参数。考试里真正容易错的不是 <code>name</code>，而是“附加组”“删除家目录”“密码需要哈希”等细节。第 17 题还会把它和 loop、when、Vault 组合起来。</p>
+
+<h3>计划任务：cron</h3>
+<p>minute/hour/day/month/weekday 决定时间，<code>job</code> 是命令，<code>user</code> 是运行身份，<code>state</code> 决定存在或删除。这里要记住一个好习惯：执行完用 <code>crontab -l -u USER</code> 验证最终系统状态。</p>
+
+<h3>get_url / unarchive / synchronize</h3>
+<p><code>get_url</code> 是让受管节点自己下载 URL；<code>unarchive</code> 根据 <code>remote_src</code> 决定压缩包来自控制端还是远端；<code>synchronize</code> 本质上借助 rsync 做 push/pull。讲义对目录末尾斜杠的解释非常值得记：<code>src=/opt</code> 往往表达“把 opt 这个目录作为一个整体同步”，而 <code>src=/opt/</code> 表达“同步 opt 里面的内容”。这和 rsync 的语义一致。</p>
+
+<div class="model"><div class="model-title">你真正应该背的不是 YAML，而是这张“动词索引”</div><div class="chips"><span>用户 → user</span><span>组 → group</span><span>包 → yum/dnf</span><span>仓库 → yum_repository</span><span>服务 → service/systemd</span><span>文件对象 → file</span><span>文件内容 → copy/template</span><span>下载 → get_url</span><span>解压 → unarchive</span><span>计划任务 → cron</span></div></div>
+<p>参数忘了就查：</p><pre><code>ansible-doc -s file
+ansible-doc -s user
+ansible-doc yum_repository
+ansible-doc -l | grep -i firewall</code></pre>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 2、3、14、19 题直接大量使用本章模块；第 8 题自定义 role 也只是把这些模块搬进 <code>roles/apache/tasks/main.yml</code>。所以这一章的目标不是“背完模块”，而是看到题面后能 30 秒内列出模块清单。</div>
+<div class="exercise"><b>随堂训练：</b>题目说“创建 /webdev，组为 devops，权限 2775，再建立 /var/www/html/webdev → /webdev 的软链接”。先不要写 YAML，只说需要几个 <code>file</code> task，它们各自的 <code>state</code> 是什么。<details><summary>看答案</summary><p>至少两个：目录 task 使用 <code>state: directory</code> 并设置 group/mode；软链接 task 使用 <code>state: link</code>，src 为 /webdev，dest 为 /var/www/html/webdev。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>03-ad-hoc 和常用模块
+1   ad-hoc 介绍
+ansible 执行方式的其中一种是 ad-hoc，ad-hoc 就像一条 Linux 命令，ad-hoc 一次性只能执行一个模块，所以 ad-hoc 一般在 ansible 中实现的是简单的任务
+ansible 执行方式的另外一种是 playbook，playbook 就像一个 shell 脚本文件，可以一次性调用多个 ansible 的模块，而且 playbook 中还可以实现条件判断、
+循环等高阶特性，playbook 一般都是实现复杂的任务
+ad-hoc 语法格式
+                                                                                       Markdown   复制
+ansible   主机 -m 模块 -a &#x27;模块参数&#x27; ansible选项
+    ：
+eg ansible all -m shell -a &#x27;useradd zhangsan&#x27; -uroot -k
+
+
+
+
+2   命令执行模块
+ansible 的命令执行模块，就是相当于在被控节点直接去执行 shell 命令，所以叫做命令执行模块
+而这些命令执行模块和其他的模块之间有一个很大的区别：
+  命令执行模块不具备幂等性
+幂等性：执行一次任何或者多次执行任务，结果只要是一样的，那么就不会发生任何改变
+  调用 user 模块去被控节点创建用户：
+     第一次调用的时候，创建了用户
+     第二次调用的时候，已经存在的用户，结果是一样的，不会发生任何改变
+
+    shell 模块
+    简单容易上手，本质就是执行 shell 命令，也就是所谓的 linux 命令
+    支持一些高阶参数：如 creates、removes、chdir..
+    command 模块
+    和 shell 模块一模一样，只不过有一些特殊符号不支持，比如 | 、&gt;...
+    raw 模块
+    和 shell 模块也是一模一样，但是不支持 shell 模块和 command 模块的那些参数
+    执行任务的时候—&gt;直接 SSH 远程执行命令，并没有将模块封装为 py 脚本去执行，所以 raw 模块可以在没有 python 环境下的被控节点执行任务
+    script 模块
+    在被控节点执行主控节点的 shell 脚本
+    实际上并不是将 shell 脚本推送到远程主机执行，而是在主控节点上读取脚本的 shell 命令，把 shell 命令推送到被控节点执行
+                                                                                           Bash   复制
+[root@adsl-172-10-0-153 ansible]# cat demo.sh
+#!/bin/bash
+ansible all -m shell -a &#x27;rm -rf /etc/yum.repos.d/* &amp;&amp; \
+    umount /dev/sr0 &amp;&amp; \
+    mount /dev/sr0 /media &amp;&amp; \
+    echo [base] &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+    echo name=base &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+    echo baseurl=file:///media/BaseOS &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+    echo gpgcheck=0 &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+          echo enabled=1 &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+    echo [app] &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+          echo name=app &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+
+              echo baseurl=file:///media/AppStream &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+              echo gpgcheck=0 &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+              echo enabled=1 &gt;&gt; /etc/yum.repos.d/dvd.repo &amp;&amp; \
+    yum install -y httpd &amp;&amp; \
+    systemctl stop firewalld &amp;&amp; \
+    setenforce 0 &amp;&amp; \
+    systemctl start httpd &amp;&amp; \
+    echo web &gt; /var/www/html/index.html
+    &#x27;
+
+
+
+3   常用模块
+3.1     文件管理模块
+1. copy
+2. fetch
+3. file
+   file：在被控节点查看文件信息、创建 | 删除 | 修改普通文件/目录文件
+   touch、rm、mkdir、chmod、chown
+     1. 查看 node 节点的/etc/passwd 文件信息
+                                                                                                                             Bash   复制
+        [root@adsl-172-10-0-153 ansible]# ansible node1 -m file -a &#x27;path=/etc/passwd state=file&#x27;
+        node1 | SUCCESS =&gt; {
+              &quot;ansible_facts&quot;: {
+                   &quot;discovered_interpreter_python&quot;: &quot;/usr/bin/python&quot;
+              },
+              &quot;changed&quot;: false,
+              &quot;gid&quot;: 0,
+              &quot;group&quot;: &quot;root&quot;,
+              &quot;mode&quot;: &quot;0644&quot;,
+              &quot;owner&quot;: &quot;root&quot;,
+              &quot;path&quot;: &quot;/etc/passwd&quot;,
+              &quot;secontext&quot;: &quot;system_u:object_r:passwd_file_t:s0&quot;,
+              &quot;size&quot;: 2243,
+              &quot;state&quot;: &quot;file&quot;,
+              &quot;uid&quot;: 0
+        }
+
+        2. 在 node1 和 node2 节点上创建/opt/file 文件，要求文件的拥有人是 devops，拥有组是 root，文件权限是 777
+                                                                                                                             Bash   复制
+        [root@adsl-172-10-0-153 ansible]# ansible node1,node2 -m file -a &#x27;path=/opt/file state=touch owner=devops group=root mode=&quot;077
+        7&quot;&#x27;
+
+
+
+        3. 修改 node2 节点上的/opt/file 文件信息，将文件的拥有人修改为 root
+                                                                                                                             Bash   复制
+        [root@adsl-172-10-0-153 ansible]# ansible node1,node2 -m file -a &#x27;path=/opt/file state=file owner=root&#x27;
+
+
+
+
+        4. 在所有的节点上创建/opt/dir 目录
+                                                                                                                             Bash   复制
+        [root@adsl-172-10-0-153 ansible]# ansible all -m file -a &#x27;path=/opt/dir state=directory&#x27;
+
+
+
+
+        5. 删除所有节点上的/opt/dir 目录文件
+                                                                                                                             Bash   复制
+        [root@adsl-172-10-0-153 ansible]# ansible all -m file -a &#x27;path=/opt/dir state=absent&#x27;
+
+  你记住，file 模块只能一个文件一个文件的删除，不支持批量删除文件
+   6. 在 node1 节点上创建软链接文件/opt/passwd，源文件指定/etc/passwd
+                                                                                                                           Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m file -a &#x27;src=/etc/passwd dest=/opt/passwd state=link&#x27;
+
+
+
+
+  copy：实现控制节点和被控节点文件的传输；把控制节点的文件传输给被控节点，在被控节点自身上进行文件拷贝，支持将内容直接写入到文件中
+  常用参数：
+    backup：在覆盖文件之前先备份一份，备份的文件名以时间命名
+    content：把内容写到文件中
+    dest：目标文件
+    src：源文件
+    remote_src：如果为 yes，则 src 表示被控节点路径，如果为 false，则 src 表示主控节点的路径
+    force：是否要覆盖文件
+   1. 将控制节点的/etc/passwd 拷贝到所有的被控节点的/tmp 目录下
+                                                                                                                           Bash   复制
+      ansible all -m copy -a &#x27;src=/etc/passwd dest=/tmp backup=true&#x27;
+
+
+
+
+      2. 将 node1 节点的/etc/passwd 文件拷贝到自己节点的/opt 目录下，修改名/opt/passwd-node1
+                                                                                                                           Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible node1 -m copy -a &#x27;remote_src=yes src=/etc/passwd dest=/opt/passwd-node1&#x27;
+
+
+
+
+      3. 使用 copy 模块将 httpd index 内容写入到/var/www/html/index.html 文件
+                                                                                                                           Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m copy -a &#x27;content=&quot;httpd index\n&quot; dest=/var/www/html/index.html&#x27;
+
+
+
+
+  fetch：将被控节点的文件拷贝到控制节点上，只能拉取普通文件，目录是无法拷贝过来的，默认情况下，拉取过来的文件在控制节点上是以被控节点主机
+  名的名字作为目录名字来存储的
+  将所有的被控节点的/etc/passwd 文件保存到控制节点的/opt 目录下
+                                                                                                                           Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m fetch -a &#x27;src=/etc/passwd dest=/opt &#x27;
+
+
+
+
+  直接拉取文件，不要以目录结构存储
+                                                                                                                           Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m fetch -a &#x27;src=/etc/passwd dest=/opt/ flat=true&#x27;
+
+
+
+
+  注意，flat 设置为 true，然后 dest 如果是一个目录，那么目录后面必须要带/
+3.2   软件管理模块
+1. yum_repository 模块：管理 yum 仓库配置文件（创建配置文件往里面写内容，修改配置文件的内容）不能删除 yum 仓库配置文件
+2. yum 模块：管理软件包的，比如安装、更新、卸载...
+
+  yum_repository
+
+常用参数：
+ file：指定 yum 配置文件的，不需要指定.repo 后缀
+ description：对应配置文件的中 name 内容
+ name：对应配置文件中的[ ] ，仓库名
+ enabled：对应配置文件中的 enabled
+ gpgcheck：对应配置文件中的 gpgcheck
+ gpgkey：对应配置文件中的 gpgcheck
+ state：present 创建仓库以及修改的含义，absent 删除仓库
+在所有的被控节点创建 yum 配置文件，要求文件名称为 dvd.repo，文件中包含俩个仓库，仓库信息如下
+                                                                                                                    YAML    复制
+[base]
+name=base
+baseurl=file:///media/BaseOS
+gpgcheck=0
+enabled=1
+[app]
+name=app
+baseurl=file:///media/AppStream
+gpgcheck=0
+enabled=1
+
+                                                                                                                     Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m yum_repository -a &#x27;file=dvd name=base description=base baseurl=file:///media/B
+aseOS gpgcheck=0 enabled=1 state=present&#x27;
+
+
+[root@adsl-172-10-0-153 ansible]# ansible all -m yum_repository -a &#x27;file=dvd name=app description=app baseurl=file:///media/App
+Stream gpgcheck=0 enabled=1 state=present&#x27;
+
+
+
+yum
+可以对包进行管理，也可以对包组进行管理
+常见参数：
+  name：指定包或者包组的名字
+  state：absent 卸载、latest 更新、present 安装
+安装 nginx 软件包
+                                                                                                                     Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m yum -a &#x27;name=nginx state=present&#x27;
+
+
+
+
+安装 Development Tools 软件包组
+                                                                                                                     Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m yum -a &#x27;name=&quot;@Development Tools&quot; state=present&#x27;
+
+
+
+
+更新系统上所有的 rpm 包版本
+                                                                                                                     Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m yum -a &#x27;name=&quot;*&quot; state=latest&#x27;
+
+
+
+
+卸载 nginx 软件包（不会同时卸载依赖包）
+                                                                                                                     Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m yum -a &#x27;name=nginx state=absent&#x27;
+
+3.3   服务管理模块
+    service
+    systemd
+systemd 模块多了 daemon_reload 参数，相当于执行了 systemctl daemon-reload
+一旦修改了服务的服务单元配置文件，一定要 daemon-reload 才能够读取到
+其他的参数都是一样
+常用参数：
+   name：操作哪个服务
+   state：started、stopped、restarted、reloaded
+   enabled：是否实现开机自启动
+ 1. 重启 httpd 服务，并且实现开机自启动
+                                                                                                                            Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m systemd -a &#x27;name=httpd state=restarted enabled=yes&#x27;
+
+
+
+
+3.4   用户管理模块
+1. user 模块：管理用户的，相当于 useradd、userdel、usermod
+2. group 模块：管理用户组的，相当于 groupadd、groupmod、groupdel
+
+  user 模块
+  创建 lisi 用户，要求 uid 是 3300，gid 是 3300，附加组是 root，描述信息是 web user，登录 shell 是/bin/bash
+                                                                                                                            Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m user -a &#x27;name=lisi uid=3300   groups=root comment=&quot;web user&quot; shell=/bin/bash st
+      ate=present&#x27;
+
+
+
+  修改 lisi 用户信息，将其登录 shell 修改为/sbin/nologin
+                                                                                                                            Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m user -a &#x27;name=lisi   shell=/sbin/nologin state=present&#x27;
+
+
+
+
+  删除 lisi 用户，删除用户的要删除家目录和邮箱文件，所以这里需要额外添加一个参数 remove=yes
+                                                                                                                            Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m user -a &#x27;name=lisi state=absent remove=yes&#x27;
+
+
+
+
+  group 模块
+  创建用户组 itgroup，gid 是 6666
+                                                                                                                            Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m group -a &#x27;name=itgroup gid=6666 state=present&#x27;
+
+
+
+
+  修改组的 gid 为 7777
+                                                                                                                            Bash   复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m group -a &#x27;name=itgroup gid=7777 state=present&#x27;
+
+  删除用户组
+                                                                                                                        Bash    复制
+      [root@adsl-172-10-0-153 ansible]# ansible all -m group -a &#x27;name=itgroup   state=absent&#x27;
+
+
+
+
+3.5   计划任务模块
+    cron 模块：相当于 crontab 周期性计划任务
+常用参数：
+  minute
+  hour
+  day
+  month
+  weekday
+  job：定义执行的任务命令
+  user：以什么用户的身份去执行任务
+  state：创建/删除
+  cron_file：指定在哪个文件定义计划任务，要么是/etc/crontab 要么是/etc/cron.d
+在 node1 节点上，每天上午 9 点 15 分，以及下午的 17 点 15 分，执行 echo hello 任务
+                                                                                                                        Bash    复制
+[root@adsl-172-10-0-153 ansible]# ansible node1 -m cron -a &#x27;name=job1 minute=&quot;15&quot; hour=&quot;9,17&quot; job=&quot;echo hello&quot; state=present&#x27;
+
+
+
+
+删除这个计划任务
+                                                                                                                        Bash    复制
+[root@adsl-172-10-0-153 ansible]# ansible node1 -m cron -a &#x27;name=job1 state=absent&#x27;
+
+
+
+
+3.6   文件下载模块
+  get_url：在被控节点下载文件使用的
+常用参数:
+ url：指定下载的文件的路径
+ dest：指定下载到目的的哪个位置
+                                                                                                                        Bash    复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m get_url -a &#x27;url=https://releases.ansible.com/ansible/ansible-2.9.0.tar.gz dest=/o
+pt&#x27;
+
+
+
+
+3.7   解压缩模块
+  unarchive：可以把控制节点的压缩包解压缩到被控节点，也可以在被控节点自身上找压缩包然后解压缩到自身另外一个目录
+常用参数：
+ src：压缩文件的源路径，默认是在控制节点上找到的，除非 remote_src=yes
+ dest：解压缩后放到哪个目录下
+
+  remote_src：表示找的压缩文件是否来自于被控节点本身，如果 remote_src=yes，则 src 是在被控节点本身搜索的压缩文件，如果 remote_src=no，则 src
+  表示控制节点的压缩文件。默认 remote_src=no
+
+                                                                                                           Bash   复制
+ ansible all -m unarchive -a &#x27;src=demo.tgz dest=/opt&#x27;
+ ansible all -m unarchive -a &#x27;remote_src=yes src=/opt/ansible-2.9.0.tar.gz dest=/opt&#x27;
+
+
+
+
+3.8   文件同步模块
+  synchronize 模块：相当于执行 rsync 命令
+     将远程主机 被控节点的文件拉取到控制节点上
+     将控制节点的文件推送到被控节点
+底层其实走的是 rsync 命令，而 rsync 走的是 SSH 协议
+常用参数：
+ mode：pull/push，默认是 push。如果是 push 的话，那么 src 表示控制节点的文件路径；如果是 pull 的话，那么 src 表示被控节点的路径
+ src：文件源路径
+ dest：文件目标路径
+
+传输目录文件：
+ 将控制节点的/etc/passwd 文件同步到所有的被控节点的/opt 目录下
+                                                                                                           Bash   复制
+   [root@adsl-172-10-0-153 ansible]# ansible all -m synchronize -a &#x27;src=/etc/passwd dest=/opt&#x27;
+
+
+
+
+  将所有的被控节点的/opt/passwd 拉取到控制节点的/tmp 目录下
+                                                                                                           Bash   复制
+   [root@adsl-172-10-0-153 ansible]# ansible all -m synchronize -a &#x27;mode=pull src=/opt/passwd dest=/tmp&#x27;
+
+
+
+
+[root@adsl-172-10-0-153 ansible]# ansible all -m synchronize -a &#x27;src=/etc/passwd dest=/opt&#x27;
+传输目录文件：
+   传输的如果是目录，那么对于 src 来说，后面路径带不带/是存在不同的意义的
+   如果带上了/，表示同步这个目录下所有的文件
+   如果没带/，表示同步这一整个目录
+   将控制节点的/opt/目录同步到被控节点的/opt 目录下
+                                                                                                           Bash   复制
+   [root@adsl-172-10-0-153 ansible]# ansible all -m synchronize         -a &#x27;src=/opt dest=/opt&#x27;
+      这个没带/，同时的是一整个opt目录
+   [root@adsl-172-10-0-153 ansible]# ansible all -m synchronize         -a &#x27;src=/opt/ dest=/opt&#x27;
+      这个带了/，同步的是/opt目录下的所有文件
+
+
+</pre></details>
+</section><section class="chapter searchable" id="ch04" data-title="Playbook">
+<div class="chapter-head"><div class="chapter-no">04</div><div><h2>Playbook</h2><p>到这里开始，Ansible 从“会发一条远程命令”变成“能把一项工作完整描述下来”。Playbook 是 RHCE 的主体，所以这里要把结构看得比模块参数更重要。</p></div><label class="chapter-check"><input type="checkbox" data-progress="04"> 学完</label></div>
+
+<div class="lecture">
+<p>Playbook 是 YAML 文件，一份文件可以有多个 play；一个 play 面向一组目标主机，里面按顺序执行多个 task。一个 task 通常调用一个模块。变量、条件、循环、handler 这些能力都围绕这条基本结构展开。</p>
+<div class="model"><div class="model-title">Playbook 的层级模型</div><div class="tree"><b>Playbook</b><span>↳ Play 1：hosts + vars + tasks + handlers</span><span>　↳ Task 1：module + args</span><span>　↳ Task 2：module + args</span><span>↳ Play 2：另一组 hosts + 另一批 tasks</span></div></div>
+
+<h3>YAML：不是难，主要是“层级必须看得出来”</h3>
+<p>讲义强调三件事：大小写区分；空格表达层级；不要用 Tab 缩进。再加一条实战经验：同层级保持统一缩进，常见用 2 个空格。YAML 里你会反复见到三种数据类型：标量（一个值）、列表（<code>-</code> 开头的一组有序元素）、字典（<code>key: value</code>）。Playbook 之所以看起来复杂，只是这三种结构在嵌套。</p>
+<pre><code>- name: create users
+  hosts: all
+  tasks:
+    - name: create lisi
+      ansible.builtin.user:
+        name: lisi
+        state: present</code></pre>
+<p>读的时候从缩进读：最外层 <code>- name</code> 是一个 play；<code>tasks:</code> 下面是任务列表；每个任务是一个字典；<code>user:</code> 下面又是模块参数字典。</p>
+
+<h3>一个 play 的四个“区域”</h3>
+<p>讲义把 play 拆成 target、vars、tasks、handlers。你可以把它理解成：<strong>我要在哪做（target）→ 我拿什么数据做（vars）→ 我要依次做什么（tasks）→ 哪些变更发生后要在结尾补做动作（handlers）。</strong></p>
+<p>target 区域除了 <code>hosts</code>，还可以出现 <code>become</code>、<code>gather_facts</code>、<code>force_handlers</code> 等 play 级配置；vars 可以直接定义，也可以用 <code>vars_files</code> 引外部文件；tasks 是主体；handlers 是被 notify 触发的特殊任务。</p>
+
+<h3>Multi-play：同一份文件里不同目标做不同事</h3>
+<p>讲义的 Web 例子先对 all 配仓库、装 httpd、调整服务，然后又给 node1 和 node2 分别写不同首页。它在教你一个很重要的拆分方式：<strong>如果目标主机集合不同，就不必硬塞进一个 task + 一大串 when；可以直接拆成多个 play。</strong>考试里第 3 题和第 9 题都很适合用 multi-play。</p>
+
+<h3>失败以后到底会发生什么？</h3>
+<p>讲义前面说“中间一个任务失败，后面的任务不执行”，后面又补了一句“只会停止这个失败主机的后续任务，其他主机不受影响”。后一句更精确：正常线性策略下，一个 host 在某个 task 失败后会退出当前 play 的后续普通任务，但其他 host 可以继续。</p>
+<p><code>ignore_errors: yes</code> 可以让失败被忽略；讲义还提了 shell 命令末尾 <code>|| true</code>。后者只是把 shell 的退出码硬变成成功，容易掩盖真实错误，所以考试里除非你很清楚为什么，否则更推荐用模块本身、<code>failed_when</code>、block/rescue 等 Ansible 方式表达。</p>
+
+<h3>Handler：它不是“另一个 tasks”，而是“变更后的延迟动作”</h3>
+<p>典型场景是配置文件发生 changed 才 reload/restart 服务。task 用 <code>notify</code> 发通知，handler 在一个 play 的任务基本执行完后统一处理。这样你有 5 个 task 都改配置，也不会每改一次就重启一次服务。</p>
+<pre><code>tasks:
+  - name: deploy httpd config
+    template:
+      src: httpd.conf.j2
+      dest: /etc/httpd/conf/httpd.conf
+    notify: restart httpd
+
+handlers:
+  - name: restart httpd
+    service:
+      name: httpd
+      state: restarted</code></pre>
+<p>讲义还讲了 <code>listen</code>：多个 handler 可以监听同一个 topic，这样一个 notify 可以触发一组动作。<code>force_handlers: yes</code> 则用于“已经被通知的 handler，即使后续普通 task 失败，也尽量在 play 结束时执行”。前提仍然是触发源真的产生了 changed。</p>
+
+<div class="precision"><b>一个很重要的本质：</b>Handler 之所以好用，是因为它依赖 changed 语义。换句话说，Ansible 不只是“命令跑没跑”，还在追踪“系统状态有没有发生改变”。这也是幂等性、handler、评分重放为什么能串成一条线。</div>
+</div>
+<div class="exam-box"><b>考试连接：</b>你写任何题都先写最小骨架：<code>- hosts → tasks → module</code>。如果题目对象很多，再考虑 multi-play、loop、when、role。先让结构正确，再填参数，能明显降低 YAML 缩进错误。</div>
+<div class="exercise"><b>随堂小练习：</b>“在 webservers 部署配置文件，如果文件内容真的改变了才重启 httpd。”这句话里，哪个 task 应该 notify？handler 应该做什么？<details><summary>答案</summary><p>负责 template/copy 配置文件的 task 加 <code>notify: restart httpd</code>；handler 使用 service/systemd 让 httpd restarted 或 reloaded。重点是“文件 changed 才触发”。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>04-ansible 的 playbook
+?.1   playbook
+playbook，剧本
+所谓的 playbook 就是一个文件，里面通过 yaml 语法进行编写，可以在 playbook 中调用多个模块，同时还支持变量的定义和引用、支持判断语句、支持循环
+语句...
+特点：按照顺序来执行剧本中的任务的（这个任务就是要在被控节点执行的任务，一个任务调用一个 ansible 模块），一旦中间有某个任务失败了，那么
+ansible 就会停止在这个任务，后面的任务不会去执行了
+
+如果编写了剧本的话，那么执行剧本的时候就不能使用 ansible 命令，而需要使用 ansible-playbook 命令去执行
+不过，ansible-playbook 命令和 ansible 命令的选项都是通用的
+
+1   playbook 如何编写
+案例
+                                                                            YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat playbook.yaml
+- name: play
+    hosts: all
+    tasks:
+    - name: create lisi user
+      user:
+       name: lisi
+       state: present
+    - name: passwd lisi user
+      shell: echo 1 | passwd --stdin lisi
+
+说明一下：playbook 中的语法格式采用的是 yaml 语法格式
+1.1   yaml 语法格式
+yaml 语法格式：专门为配置文件编写的一种语法格式，一般都是使用在配置文件上
+比如 ansible 中的 playbook，比如 K8S 中的资源文件（pod、deployment...）
+ 1. yaml 语法中大小写严格区分
+ 2. yaml 中，具备层级关系，使用空格来表示层级关系，空格的数量多少无所谓，但是同一个层级下的一定要并齐
+ 3. yaml 中不允许使用 tab 键来表示层级关闭，你必须使用空格隔开
+
+
+1.2   yaml 数据类型
+1. 纯量：是 yaml 中最小的单位，是不可以再次分割的单位
+2. 列表/数组/序列：一个-就是代表一个列表，列表是一组有次序的内容
+   在 playbook 中，一个 play 就是一个列表，一个 task 任务就是一个列表
+3. 对象/字典：表现形式是键值对 key: value
+   在 playbook 中，调用的模块、模块的参数这些东西都是对象类型
+
+
+1.3   playbook 的组成和编写
+
+playbook 是由多个 play 组成的，每个 play 可以定义不同的 task 任务，可以定义在不同的主机上执行任务，可以定义变量...
+一个 playbook 存在多个 play，我们又称之为 multi play，多个 play
+每个 play 的组成是由 4 个部分组成的：
+ 1. target 部分
+    定义这个 play 叫什么名字
+    定义这个 play 中的任务会在哪些主机上执行
+    定义这个 play 中配置参数是什么—&gt;和 ansible.cfg 一模一样，不过优先级比它
+ 2. vars 部分
+    定义变量的，让下面的 task 任务可以引用这些变量
+    可以直接在 play 中定义变量，可以引用外部的变量文件...
+ 3. tasks 部分
+    要在被控节点执行的所有的任务都是在这个 tasks 部分里面写的
+    对于 task 任务来说，一个 task 任务就是调用一个模块
+ 4. handlers 部分
+    handlers 在 ansible 中属于触发器，也就是说只有特定的情况下才会执行 handlers
+    handlers 其实是属于特殊的 tasks，它下面可以执行多个 task 任务
+1.4   剧本案例编写
+yaml 文件的后缀尽量是.yaml 或者.yml
+第一个：要求剧本名/etc/ansible/play1.yaml，在被控节点实现初始化操作，例如创建一个 demo 用户，uid 是 3450，家目录是/tmp/demo，登录 shell
+是/bin/bash，设置用户的密码为 demo，要求这个 demo 用户可以使用 sudo 提权，并且控制节点可以实现免密登录到主机的 demo 用户
+                                                                                          YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat /etc/ansible/play1.yaml
+- name: create user
+  hosts: all
+  tasks:
+  - name: create demo user
+      user:
+       name: demo
+       uid: 3450
+       home: /tmp/demo
+       shell: /bin/bash
+       state: present
+
+
+  - name: modify demo user password
+      shell: echo 1 | passwd --stdin demo
+
+
+  - name: configure demo user sudo
+      shell: echo &quot;demo ALL=(ALL) NOPASSWD:ALL&quot; &gt;&gt; /etc/sudoers
+
+
+  - name: mkdir /tmp/demo/.ssh
+      file:
+       path: /tmp/demo/.ssh
+       state: directory
+       mode: &quot;0700&quot;
+       owner: demo
+       group: demo
+
+
+  - name: configure ssh
+      copy:
+       src: ~/.ssh/id_rsa.pub
+       dest: /tmp/demo/.ssh/authorized_keys
+
+                                                                                          YAML   复制
+ansible-playbook /etc/ansible/play1.yaml
+
+第二个：要求剧本名/etc/ansible/play2.yaml，在所有的被控节点上执行，要求配置本地 YUM 仓库，然后实现 httpd 软件的安装，并且最终在控制节点上使用
+curl 命令访问被控节点主机名的时候，访问 node1 则输出的是 node1 内容，访问 node2 则输出的是 node2 内容
+                                                                                 YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat play2.yaml
+- name: deploy web site
+  hosts: all
+  tasks:
+  - name: clear /etc/yum.repos.d/
+    shell: rm -rf /etc/yum.repos.d/*
+
+
+  - name: mount cdrom
+    shell: mount /dev/sr0 /media
+    ignore_errors: yes
+
+  - name: configure BaseOS repository
+    yum_repository:
+     file: dvd
+     name: baseos
+     description: baseos
+     baseurl: file:///media/BaseOS
+     gpgcheck: 0
+     enabled: 1
+
+
+  - name: configure AppStream repository
+    yum_repository:
+     file: dvd
+     name: app
+     description: app
+     baseurl: file:///media/AppStream
+     gpgcheck: 0
+     enabled: 1
+
+
+  - name: install httpd pkg
+    yum:
+     name: httpd
+     state: present
+
+
+  - name: close firewalld
+    systemd:
+     name: firewalld
+     state: stopped
+     enabled: no
+
+
+  - name: close selinux
+    shell: setenforce 0
+
+
+  - name: start httpd service
+    systemd:
+     name: httpd
+     state: restarted
+     enabled: yes
+
+
+- name: node1
+  hosts: node1
+  tasks:
+  - name: modify index.html node1
+    copy:
+     content: &quot;node1\n&quot;
+     dest: /var/www/html/index.html
+
+
+- name: node2
+  hosts: node2
+  tasks:
+  - name: modify index.html node2
+    copy:
+
+        content: &quot;node2\n&quot;
+
+如果执行任务报错了，有俩种解决办法
+         / / /  /
+
+
+ 1. 所有的模板都可以采用这种方式，直接忽略这个报错的任务，这样的话，playbook 会继续执行
+                                                                                  YAML   复制
+      ignore_errors: yes
+
+
+
+
+ 2. 只针对于命令执行模块有效果，就是添加一个 || true
+如果执行任务失败的话，只有这个执行失败的主机才会停止后面任务的执行，其他的主机不受到影响
+
+
+1.5   handlers 部分补充
+handlers 属于特殊的 tasks，是属于 play 四大部分之一，所以他们的层级关系是一样的。
+handlers 是触发器，只有特定的情况下才会去执行 handlers 下面的任务
+  特定的情况：监控一个 task 任务，当这个 task 任务的返回状态是 changed 的时候，则触发 handlers 任务
+无论监听的这个 task 任务是什么时候执行的，handlers 下面的任务只会在所有的任务完成最后去执行
+简单的 handlers 测试 yaml
+                                                                                  YAML   复制
+- name: play3
+  hosts: all
+  tasks:
+  - name: task1
+      shell: ls /etc/passwd
+      notify: aaaa
+
+
+  - name: task2
+      shell: ls /etc/group
+
+
+  handlers:
+  - name: aaaa
+      shell: echo handlers
+
+上面这种写法，即使监听了某个 task 任务，即使在 handlers 下面编写了很多很多的任务，但是最后执行 handlers 任务的时候，只会执行最后一个 handlers 任
+务
+如果要想执行 handlers 下面多个 task 任务，你需要加入一个关键字 listen
+                                                                                  YAML   复制
+- name: play3
+  hosts: all
+  tasks:
+  - name: task1
+      shell: ls /etc/passwd
+      notify: aaaa
+
+
+  - name: task2
+      shell: ls /etc/group
+
+
+  handlers:
+      - name: handlers1
+        listen: aaaa
+        shell: echo handlers
+
+
+      - name: handlers2
+        listen: aaaa
+        shell: echo aaaa
+
+
+
+
+如果执行任务中，有任何一个任务报错，即使监听的任务是 changed 状态，handlers 任务也不会触发
+
+                                                                        YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat play3.yaml
+- name: play3
+  hosts: all
+  tasks:
+  - name: task1
+    shell: ls /etc/passwd
+    notify: aaaa
+
+
+  - name: task2
+    shell: lss /etc/group
+
+
+  handlers:
+    - name: aaaa
+     shell: echo handlers
+
+我们可以看到，明明监听的任务是 changed，但是 handlers 没有触发
+
+如果需要强制执行 handlers 任务，加上 force_handlers
+                                                                        YAML   复制
+- name: play3
+  hosts: all
+  force_handlers: yes
+  tasks:
+  - name: task1
+    shell: ls /etc/passwd
+    notify: aaaa
+
+
+  - name: task2
+    shell: lss /etc/group
+
+
+  handlers:
+    - name: aaaa
+     shell: echo handlers
+
+强制执行的前提，是你监听的那个任务状态是 changed
+
+什么时候使用 handlers 的场景
+在部署 web 服务的场景下，我们可以使用 notify 监听安装某个软件包的任务，然后最后把启动这个服务的任务写到 handlers 中
+
+
+</pre></details>
+</section><section class="chapter searchable" id="ch05" data-title="变量、Facts 与魔法变量">
+<div class="chapter-head"><div class="chapter-no">05</div><div><h2>变量、Facts 与魔法变量</h2><p>这章是 RHCE 从“照着模块写”迈向“同一份 Playbook 管很多不同机器”的关键。你要学的不是变量语法本身，而是数据到底从哪里来。</p></div><label class="chapter-check"><input type="checkbox" data-progress="05"> 学完</label></div>
+
+<div class="lecture">
+<p>变量的本质很简单：把会变化、会复用、或者不应该硬编码在 task 里的值抽出来。讲义列了变量命名规则：字母、数字、下划线组成；大小写区分；建议字母开头；避免和 Ansible 的内部/保留变量冲突。这里“不能以 ansible 开头”更适合作为安全约定理解，而不是把它当成 YAML 解析器绝对禁止规则——你真正要避免的是覆盖已有的 <code>ansible_*</code> facts、连接变量或 magic variable。</p>
+
+<h3>debug：学习变量最重要的显微镜</h3>
+<p><code>debug</code> 有两个最常用入口：<code>var:</code> 直接查看变量对象；<code>msg:</code> 输出经过 Jinja2 渲染的字符串。学习变量、facts、register 时，不要靠猜，随手 debug。</p>
+<pre><code>- debug:
+    var: ansible_devices
+
+- debug:
+    msg: "{{ inventory_hostname }} -> {{ ansible_default_ipv4.address }}"</code></pre>
+
+<h3>变量来源一：Inventory 中的 host/group vars</h3>
+<p>主机变量只对该 host 生效，组变量对组成员生效；如果同一个变量在不同层级冲突，会进入 Ansible 的变量优先级体系。讲义用“主机变量比主机组变量高”帮助入门，这个局部关系可以记住，但完整优先级非常长，考试没必要整张背。你要做的是尽量不要在多个地方故意定义同名变量。</p>
+<p>Inventory 里还有一类很特殊的 <code>ansible_*</code> 连接变量，例如 <code>ansible_host</code>、<code>ansible_port</code>、<code>ansible_user</code>、<code>ansible_become</code>、私钥路径等。它们不是业务数据，而是在告诉 Ansible“怎么连这个目标”。</p>
+
+<h3>变量来源二：Play 中 vars 与 vars_files</h3>
+<p><code>vars:</code> 适合少量、与 play 紧密相关的变量；嵌套字典可以用点号或下标访问。讲义还演示了 play 的变量作用域：在一个 play 里定义的 vars，不应该想当然地认为下一个无关 play 一定能直接拿到。</p>
+<p><code>vars_files:</code> 把数据拆出去特别适合考试第 17 题：用户列表是一个文件，密码又在 Vault 加密变量文件中。Playbook 只表达逻辑，数据文件表达数据。这个分层比把几十个账号写死在 task 里稳得多。</p>
+
+<h3>变量来源三：命令行 extra vars</h3>
+<p><code>-e</code> / <code>--extra-vars</code> 可以在运行时注入变量，而且优先级非常高。讲义举了 Ceph 不同版本部署的例子：同一份 playbook，通过输入不同变量控制行为。备考里不一定高频，但它能帮你理解“Playbook 是程序骨架，变量是运行参数”。</p>
+
+<h3>host_vars / group_vars：把 Inventory 数据项目化</h3>
+<p>原讲义写成了 “hosts_vars / groups_vars”，实际 Ansible 约定目录名是 <strong><code>host_vars</code> 与 <code>group_vars</code></strong>。文件名通常对应 inventory host/group。它们让 inventory 不必塞满 <code>key=value</code>，大型项目更清晰。考试题规模不大，但你要认识这个目录约定。</p>
+
+<h3>register：把“上一个 task 的结果”变成下一步数据</h3>
+<p><code>register</code> 和模块同层级，它保存的是整个结果对象，不只是 stdout。命令模块常见字段有 <code>rc</code>、<code>stdout</code>、<code>stderr</code>、<code>changed</code>、<code>failed</code>。因此“先探测、再决定”是很自然的写法。</p>
+<pre><code>- name: check file
+  command: test -f /opt/passwd
+  register: status
+  ignore_errors: yes
+
+- name: do something only when check succeeded
+  debug:
+    msg: ok
+  when: status.rc == 0</code></pre>
+<p>不过后面你会学到更 Ansible 化的方式，例如 facts、<code>stat</code> 模块、条件测试；register 是通用机制，不代表每次探测都必须 shell。</p>
+
+<h3>Facts：目标机器自己“告诉你它是谁”</h3>
+<p>这是本章最重要的部分。默认 play 会有 gathering facts 阶段，Ansible 收集目标主机的操作系统、内存、CPU、网络、块设备等信息。传统写法里你经常看到 <code>ansible_memtotal_mb</code>、<code>ansible_bios_version</code>、<code>ansible_devices</code>；现代形式也可以从 <code>ansible_facts</code> 字典访问。</p>
+<p>你可以关闭自动收集 <code>gather_facts: false</code>，也可以在 task 中手动调用 <code>setup</code>。考试里如果不知道某个 fact 叫什么，最可靠的办法不是背答案，而是现场查询：</p>
+<pre><code>ansible servera -m setup
+ansible servera -m setup -a 'filter=ansible_*_mb'
+ansible servera -m setup -a 'filter=ansible_devices'</code></pre>
+<p>第 15 题“硬件报告”就是典型 facts 题：主机名、内存、BIOS、vda/vdb 大小都来自 facts。你要练到看到“目标主机自身信息”就自然想到 facts。</p>
+
+<h3>set_fact：在运行过程中合成新的变量</h3>
+<p>它适合把多个原始数据组合成一个后续好用的值，例如 <code>os_version: "{{ ansible_distribution }} {{ ansible_distribution_major_version }}"</code>。它和普通 vars 的区别在于：它是在 task 执行过程中为当前 host 设置 fact-like 变量。</p>
+
+<h3>lookup：从控制端/执行环境读取外部数据</h3>
+<p>讲义列了 env、file、pipe 三种 lookup。这里把语法写精确一点：</p>
+<pre><code>{{ lookup('env', 'PWD') }}
+{{ lookup('file', '/etc/passwd') }}
+{{ lookup('pipe', 'echo huawei') }}</code></pre>
+<p>它表达的思想很重要：有些数据并不来自受管节点，而来自<strong>运行 Ansible 的控制上下文</strong>。Navigator 下这个“控制上下文”可能是 execution environment，所以路径和可见文件要按实际环境理解。</p>
+
+<h3>自定义 local facts</h3>
+<p>讲义介绍了在受管节点 <code>/etc/ansible/facts.d/*.fact</code> 定义自己的事实，最终出现在 local facts（常见访问路径 <code>ansible_local</code> / <code>ansible_facts.ansible_local</code>）中。这个能力让你把“这个节点特有的业务标签”也变成 facts。RHCE 模拟题里不是主角，但它能帮你理解 facts 并不只来自操作系统探测。</p>
+
+<h3>Magic Variables：不是主机事实，而是 Ansible 执行上下文</h3>
+<table><tr><th>变量</th><th>你可以这样理解</th><th>考试常见用途</th></tr>
+<tr><td><code>inventory_hostname</code></td><td>当前目标在 inventory 里的名字</td><td>写报告、按主机名判断</td></tr>
+<tr><td><code>ansible_hostname</code></td><td>从目标系统 fact 得到的主机名</td><td>和 inventory 名称区分</td></tr>
+<tr><td><code>groups</code></td><td>inventory 中“组 → 成员列表”的总字典</td><td>Jinja2 循环所有主机</td></tr>
+<tr><td><code>group_names</code></td><td>当前 host 属于哪些组</td><td>第 13 题按 dev/test/prod 分支</td></tr>
+<tr><td><code>hostvars</code></td><td>从一个 host 去取另一个 inventory host 的变量/facts</td><td>第 12 题生成包含所有主机的 hosts 文件</td></tr></table>
+<div class="model"><div class="model-title">把“数据来源”先判断出来，题目就简单一半</div><div class="chips"><span>题目给的固定值 → vars</span><span>外部 YAML → vars_files</span><span>目标机器信息 → facts</span><span>上个任务结果 → register</span><span>Inventory 关系 → magic vars</span><span>控制端数据 → lookup</span></div></div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 12、13、15、17 题都靠这章。特别是第 17 题：用户列表来自外部文件、密码来自 Vault、循环每个 user、根据 <code>item.job</code> 用 when 分类、再对不同 hosts 创建。你如果只背 user 模块，这题还是做不出来；真正的核心是“数据流”。</div>
+<div class="exercise"><b>随堂小测：</b>“生成 /etc/myhosts，里面要包含 inventory 所有主机的 IP、FQDN、短主机名。”这句话涉及哪三个数据工具？<details><summary>答案</summary><p><code>groups.all</code> 用来列出所有 inventory hosts；<code>hostvars[host]</code> 用来访问每个 host 的变量/facts；具体 IP/FQDN/hostname 来自 facts。然后通过 Jinja2 for 循环渲染。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>05-ansible 的变量
+1   定义变量的注意事项
+1. 变量名组成是由 数字、下划线、字母组成
+2. 大小写严格区分
+3. 变量名必须是字母开头
+4. 不能以 ansible 开头作为变量（因为 ansible 具备内置变量，内置变量以 ansible 开头的）
+
+
+
+2   定义变量和引用变量的方式
+2.1   测试和引用变量
+学到一个新的模块，debug 模块
+具备 2 个参数：
+   var：后面直接写变量名。 变量名
+   msg：后面写什么，屏幕上就会输出什么。&quot;{{ 变量名 }}&quot; 来输出变量的值
+2 个参数不能同时使用
+引用变量：&quot;{{ 变量名 }}&quot;
+2.2   在主机清单中定义变量
+    定义主机变量
+    定义主机组变量
+一般在主机清单中定义的变量分为俩类：
+ 1. 用户自定义变量
+    定义主机变量，只有对应的主机才能够使用这个变量
+                                                                            Bash    复制
+      node1 pkg=httpd service=nginx
+      node2 pkg=httpd service=nginx
+
+
+
+    定义主机组变量，只有对应主机组的主机成员才能够使用这个变量
+                                                                              Ini   复制
+      [servers]
+      node1
+      node2
+
+
+      [servers:vars]
+      memeda=huawei
+
+   如果主机变量和主机组变量冲突，则主机变量优先级更高
+2. anisble 内置变量
+   一般都是 ansible_开头的变量，这些变量是 ansible 自带的，他们的作用和 ansible.cfg 配置文件中的配置参数作用一样
+   #关于连接的内置变量
+                                                                            YAML    复制
+
+      ansible_host         #用于指定被管理的主机的真实IP
+      ansible_port         #用于指定连接到被管理主机的ssh端口号，默认是22
+      ansible_user         #ssh连接时默认使用的用户名
+
+                                                                                             Markdown   复制
+      #   特权升级
+      ansible_become          相当于ansible_sudo或者ansible_su，允许强制特权升级
+                                   #
+      ansible_become_user  #通过特权升级到的用户，相当于ansible_sudo_user或者ansible_su_user
+      ansible_become_pass # 提升特权时，如果需要密码的话，可以通过该变量指定，相当于ansible_sudo_pass或者ansible_su_pass
+      ansible_sudo_exec      #如果sudo命令不在默认路径，需要指定sudo命令路径
+
+
+      #   特定ssh连接
+      ansible_connection          连接的类型：local, ssh, paramiko，默认是ssh
+                                  #SSH
+      ansible_ssh_pass          #ssh连接时的密码
+      ansible_ssh_private_key_file    #秘钥文件路径，如果不想使用ssh-agent管理秘钥文件时可以使用此选项
+      ansible_ssh_executable           #如果ssh指令不在默认路径当中，可以使用该变量来定义其路径
+
+ansible 的内置变量是无法通过 ansible 工具查询的，只能够在 ansible 的官网去查询
+2.3   在 playbook 中定义变量
+2.3.1     通过 vars 关键字定义变量
+                                                                                                YAML    复制
+- name: var
+  hosts: all
+  vars:
+        os1: rhel1
+        os2: rhel2
+        os3: rhel3
+  tasks:
+  - name: use var
+        debug:
+          msg: &quot;{{ os1 }} {{ os2 }} {{ os3 }}&quot;
+
+上面定义变量还是比较基础的，下面这种方式定义的是变量的嵌套
+                                                                                                YAML    复制
+- name: var
+  hosts: all
+  vars:
+        os1: rhel1
+        os2: rhel2
+        os3: rhel3
+        users:
+          username: memeda001
+          uid: 3000
+          home: /home/memeda001
+          shell: /bin/bash
+  tasks:
+  - name: create user
+        user:
+          name: &quot;{{ users.username }}&quot;
+          uid: &quot;{{ users.uid }}&quot;
+          home: &quot;{{ users.home }}&quot;
+          shell: &quot;{{ users.shell }}&quot;
+          state: present
+
+这个时候如果直接引用 users 变量的话，则它的值就是 username、uid、home，如果想要引用指定的值，那么使用 变量名.变量名来引用
+
+看下面的案例
+                                                                                                YAML    复制
+- name: var
+  hosts: all
+  vars:
+        os1: rhel1
+        os2: rhel2
+        os3: rhel3
+
+  tasks:
+  - name: create user
+        debug:
+         msg: &quot;{{ os1 }}&quot;
+
+
+
+- name: var2
+  hosts: all
+  tasks:
+  - name: use var
+        debug:
+         msg: &quot;{{ os1 }}&quot;
+
+然后执行 playbook，会发现 var2 这个 play 执行报错，报错信息如下
+                                                                                                                        YAML   复制
+fatal: [node1]: FAILED! =&gt; {&quot;msg&quot;: &quot;The task includes an option with an undefined variable. The error was: &#x27;os1&#x27; is undefined\n\nT
+he error appears to be in &#x27;/etc/ansible/var1.yaml&#x27;: line 16, column 5, but may\nbe elsewhere in the file depending on the exact sy
+ntax problem.\n\nThe offending line appears to be:\n\n   tasks:\n   - name: use var\n   ^ here\n&quot;}
+
+说明找不到 os1 变量，说明 play 之间定义的变量是不能够通用的
+2.3.2   通过 vars_files 关键字引用外部变量文件
+如果所有的变量都是通过 vars 在 playbook 中定义的话，那么变量如果数量很多的话，就会导致 playbook 看起来非常的臃肿
+如果引用的变量是比较私密的，比如说通过变量的方式来给用户设置密码，如果你写入到了 playbook 中，那么任何人都可以看到这个变量的值就知道了用户的
+密码，容易泄露
+如果是采用引用外部变量文件的方式来加载变量，有一个好处在于我们是可以通过 ansible-vault 命令来对于变量文件加密的，当执行 playbook 的时候 如果你
+调用了这个外部变量文件的变量，是需要解密才能够执行的
+                                                                                                                        YAML   复制
+
+- name: var
+  hosts: all
+  vars_files:
+  - vars.yaml
+  - vars1.yaml
+  tasks:
+  - name: create user
+        debug:
+         msg: &quot;{{ os1 }}&quot;
+
+
+
+- name: var2
+  hosts: all
+  tasks:
+  - name: use var
+        debug:
+         msg: &quot;{{ os1 }}&quot;
+
+实际上，不需要-，但是不加-的话，只能去引用一个外部变量文件，但是一个 playbook 的项目，有多个外部变量文件都得引用，那么最好在每个变量文件的前
+面加上一个-
+
+
+2.4   通过命令行来定义变量
+无论是 ansible 命令，还是 ansible-playbook 命令都可以通过一个-e 选项来定义变量
+通过选项定义的变量是所有变量中优先级最高的！
+                                                                                                                        Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m debug -a &#x27;msg=&quot;{{ os1 }}&quot;&#x27;    -e os1=nihao
+[root@adsl-172-10-0-153 ansible]# ansible-playbook var1.yaml -e os1=abcd
+
+
+
+红帽的很多产品部署都是基于 ansible 实现的，这个产品有不同的版本，红帽通过一个 playbook 就实现的多个版本的安装
+通过变量实现的，比如那个 Ceph 分布式存储。部署的时候什么都不加， 默认部署的就是最新版本
+
+如果想要部署指定版本的话，可以通过执行剧本的时候使用-e 选项
+2.5   通过 hosts_vars 和 groups_vars 目录定义变量
+hosts_vars 目录
+groups_vars 目录
+这俩个目录下你创建的文件就是主机或者主机组的名字，这些文件中定义的变量就是给对应主机或者主机组使用的
+比如 host_vars 目录下存在一个叫做 node1 文件，你在 node1 文件中定义的变量最终是给到 node1 主机使用
+比如 groups_vars 目录下存在一个叫做 servers 文件，你在 servers 文件定义的变量最终是给到 servers 主机组使用
+目录要存放到和 ansible.cfg 配置文件同一个地方
+   比如/etc/ansible/ansible.cfg，那么目录就要存储到/etc/ansible
+                                                                                                                       Markdown   复制
+/etc/ansible/host_vars:
+total 8
+-rw-r--r--. 1 root root      9 Apr 19 11:47 node1
+-rw-r--r--. 1 root root 10 Apr 19 11:47 node2
+
+                                                                                                                          YAML    复制
+[root@adsl-172-10-0-153 host_vars]# cat /etc/ansible/host_vars/node1
+var1: os
+[root@adsl-172-10-0-153 host_vars]# cat /etc/ansible/host_vars/node2
+var1: aaa
+
+
+
+2.6   通过 register 关键字注册变量
+这个通常是在 playbook 中使用的，和模块的层级关系是一样的
+register 关键字可以将一个 task 任务的执行结果保存为一个变量—&gt;它都是配合后面的条件判断语句来执行 task 任务的
+比如 register 关键字将前面的一个 task 任务执行结果保存为变量，然后后面的 task 任务如果要执行的话则判断注册变量的 rc 返回值是不是 0
+                                                                                                                          YAML    复制
+
+[root@adsl-172-10-0-153 ansible]# cat var1.yaml
+- name: var
+  hosts: all
+  vars_files:
+  - vars.yaml
+  tasks:
+  - name: install nginx pkg
+      shell: cat /etc/passwd
+      register: user_status
+
+
+  - name: shuchu
+      debug:
+       msg: &quot;{{ user_status }}&quot;
+
+需要注意一下，register 注册的变量输出结果并不是完全一直的，这里我采用命令执行模块来输出
+                                                                                                                          JSON    复制
+ok: [node1] =&gt; {
+      &quot;msg&quot;: {
+          &quot;changed&quot;: true,
+          &quot;cmd&quot;: &quot;cat /opt/passwd&quot;,
+          &quot;delta&quot;: &quot;0:00:00.002148&quot;,
+          &quot;end&quot;: &quot;2026-04-19 11:56:04.439161&quot;,
+          &quot;failed&quot;: false,
+          &quot;rc&quot;: 0,   #    任务的返回值，如果是0的话说明任务执行成功，非0表示失败
+          &quot;start&quot;: &quot;2026-04-19 11:56:04.437013&quot;,
+          &quot;stderr&quot;: &quot;&quot;,
+          &quot;stderr_lines&quot;: [],
+          &quot;stdout&quot;: &quot;root:x:0:0:root:/root:/bin/bash\nbin:x:1:1:bin:/bin:/sbin/nologin\ndaemon:x:2:2:daemon:/sbin:/sbin/nologin\nad
+m:x:3:4:adm:/var/adm:/sbin/nologin\nlp:x:4:7:lp:/var/spool/lpd:/sbin/nologin&quot;,
+          &quot;stdout_lines&quot;: [
+
+              &quot;root:x:0:0:root:/root:/bin/bash&quot;,
+              &quot;bin:x:1:1:bin:/bin:/sbin/nologin&quot;,
+              &quot;daemon:x:2:2:daemon:/sbin:/sbin/nologin&quot;,
+              &quot;adm:x:3:4:adm:/var/adm:/sbin/nologin&quot;,
+              &quot;lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin&quot;
+          ]
+     }
+}
+
+
+
+通过 register 配合判断语句实现一个条件判断：
+当/opt/passwd 文件存在的时候，才会输出 ok
+                                                                                   YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat var1.yaml
+- name: var
+    hosts: all
+    tasks:
+    - name: use shell module
+     shell: ls /opt/passwd
+     register: status
+     ignore_errors: yes
+
+
+    - name: shuchu
+     debug:
+         msg: ok
+     when: status.rc == 0
+
+
+
+
+3   fact 事实变量
+所谓的 fact 实时变量，其实就是收集了被控节点的主机信息，将其保存到一个叫做 ansible_fats 变量中，这个变量我们称之为 fact 事实变量
+默认情况下，只要执行了 playbook，那么 play 中会存在一个隐藏的任务 [gathering facts]，专门去获取节点的主机信息，play 在哪些主机上运行，则获取哪些
+主机的信息
+                                                                                   YAML   复制
+# plays will gather facts by default, which contain information about
+# the remote system.
+#
+# smart - gather by default, but don&#x27;t regather if already gathered
+# implicit - gather by default, turn off with gather_facts: False
+# explicit - do not gather by default, must say gather_facts: True
+gathering = implicit
+
+
+# This only affects the gathering done by a play&#x27;s gather_facts directive,
+# by default gathering retrieves all facts subsets
+# all - gather all subsets
+# network - gather min and network facts
+# hardware - gather hardware facts (longest facts to retrieve)
+# virtual - gather min and virtual facts
+# facter - import facts from facter
+# ohai - import facts from ohai
+# You can combine them using comma (ex: network,virtual)
+# You can negate them using ! (ex: !hardware,!facter,!ohai)
+# A minimal set of facts is always gathered.
+gather_subset = all
+
+这一段定义了 fact 事实变量的相关信息，之所以默认就收集是这里来的
+
+fact 事实变量通常都是配合条件判断使用的
+
+模块：setup
+如果想要手动收集主机信息，可以利用 setup 模块来实现，setup 模块就是收集信息保存到 ansible_facts 变量中
+                                                                                           Bash   复制
+ansible   主机名 -m setup &gt; 文件
+
+将主机的所有信息保存到文件中，你直接去文件中过滤你想要的关键字就可以了
+
+  关闭和开启 fact 变量收集
+                                                                                           YAML   复制
+      - name: var
+        hosts: all
+        gather_facts: False
+        tasks:
+        - name: debug
+          debug:
+           msg: &quot;{{ ansible_default_ipv4.interface }} {{ ansible_default_ipv4.address }}
+
+关闭 fact 收集的话，你的 task 任务中就不要引用 fact 变量，因为没有收集，所以变量是不存在的
+                                                                                           YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat var1.yaml
+- name: var
+  hosts: all
+  gather_facts: False
+  tasks:
+  - name: setup
+      setup:
+
+
+  - name: debug
+      debug:
+        msg: &quot;{{ ansible_default_ipv4.interface }} {{ ansible_default_ipv4.address }}&quot;
+
+这个案例中，在 target 部分已经关闭了 fact 收集，但是因为 tasks 任务列表中存在一个调用 setup 模块的 task 任务，所以依旧是会收集 fact 变量的
+3.1   set_fact 模块整合新的变量
+                                                                                           YAML   复制
+- name: var
+  hosts: all
+
+  tasks:
+  - name: setfact
+      set_fact:
+       os_version: &quot;{{ ansible_distribution }} {{ ansible_distribution_major_version }}&quot;
+  - name: use debug
+      debug:
+       msg: &quot;{{ os version }}&quot;
+
+
+
+
+3.2   lookup 插件，从外部数据源读取内容作为变量的值
+有的时候，我们定义的变量，它的值是来自于控制节点的文件的内容的，可能也是来自于控制节点的环境变量的，甚至可能是来自于控制节点某个命令的执行
+结果的
+lookup 插件下面存在很多的方法，这些方式支持通过不同的方式来读取内容作为变量的值
+ 1. env 方法：读取控制节点上环境变量的值作为变量的值
+ 2. file 方法：读取控制节点上文件的内容作为变量的值
+ 3. pipe 方法：读取控制节点上命令的执行结果作为变量的值
+lookup 插件所有的方法全部都是读取的控制节点的信息
+                                                                                           Markdown   复制
+变量名: &quot;{{ lookup(&#x27;方法&#x27;),&#x27;方法的值&#x27; }}&quot;
+env方法：
+  变量名: &quot;{{ lookup(&#x27;env&#x27;),&#x27;PWD&#x27; }}&quot;
+file方法：
+  变量名: &quot;{{ lookup(&#x27;file&#x27;),&#x27;/etc/passwd&#x27; }}&quot;
+pipe方法：
+  变量名: &quot;{{ lookup(&#x27;pipe&#x27;),&#x27;echo huawei&#x27; }}&quot;
+通过 lookup 插件的 pipe 方法，在创建用户的时候实现密码的指定，而不是通过 shell 模块来实现
+
+
+3.3   自定义 fact 事实变量
+自定义的 fact 事实变量，最终会保存到 ansible_facts.ansible_local 中
+
+
+
+
+自定义 fact 事实变量，是在被控节点上定义的，不是在控制节点上定义的
+被控节点会在/etc/ansible/facts.d 目录下，去找以.fact 结尾的文件
+这个文件就是变量文件，自定义 fact 变量就是写到这个文件中的，采用的定义的格式是 ini 格式
+
+                                                                                                            Bash   复制
+[root@adsl-172-10-0-153 ansible]# cat node1.fact
+[node1_var]
+pkg=nginx
+
+
+[root@adsl-172-10-0-153 ansible]# cat node2.fact
+[node2_var]
+pkg=httpd
+
+                                                                                                            Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible all -m shell -a &#x27;mkdir /etc/ansible/facts.d -p&#x27;
+
+
+[root@adsl-172-10-0-153 ansible]# ansible node1 -m copy -a &#x27;src=node1.fact dest=/etc/ansible/facts.d&#x27;
+
+
+[root@adsl-172-10-0-153 ansible]# ansible node2 -m copy -a &#x27;src=node2.fact dest=/etc/ansible/facts.d&#x27;
+
+
+
+
+4   magic 魔法变量
+魔法变量是属于特殊的内置变量，这类内置变量具备特殊的含义
+  内置变量一般都是和配置文件的配置参数相关的
+  魔法变量最终是在 playbook 引用的，具备一些特殊的意义
+  比如 groups 魔法变量的值所有的主机组
+  比如 hostvars 魔法变量
+  比如 group_names 魔法变量
+ansible 的魔法变量，无法通过 ansible 工具查询，只能上 ansible 官网
+常见的魔法变量：
+ 1. hostvars：获取指定主机的 fact 事实变量
+                                                                                                        Markdown   复制
+    &quot;{{ hostvars[&#x27;node1&#x27;].ansible_default_ipv4.address }}&quot;
+                 主机清单中的主机IP或者主机名&#x27;].fact事实变量 }}&quot;
+    &quot;{{ hostvars[&#x27;
+
+
+
+
+2. inventory_hostname：表示执行任务的主机的主机名
+   这个主机名到底是主机清单中定义的主机名，还是操作系统本身的主机名？
+   inventory_hostname 魔法变量—&gt;看的是主机清单中的主机名
+
+   ansible_hostname fact 事实变量—&gt;看的被控本身的主机名
+   配合判断语句来使用：当主机的主机名是 node1 的时候，才会执行这个 task 任务
+3. groups：表示主机清单中所有的主机组
+                                                 JSON   复制
+  ok: [node1] =&gt; {
+      &quot;msg&quot;: {
+          &quot;all&quot;: [
+               &quot;node1&quot;,
+               &quot;node2&quot;
+          ],
+          &quot;servers&quot;: [
+               &quot;node1&quot;,
+               &quot;node2&quot;
+          ],
+          &quot;ungrouped&quot;: []
+      }
+  }
+  ok: [node2] =&gt; {
+      &quot;msg&quot;: {
+          &quot;all&quot;: [
+               &quot;node1&quot;,
+               &quot;node2&quot;
+          ],
+          &quot;servers&quot;: [
+               &quot;node1&quot;,
+               &quot;node2&quot;
+          ],
+          &quot;ungrouped&quot;: []
+      }
+  }
+
+
+
+4. group_names：表示运行任务的主机所在的主机组
+
+</pre></details>
+</section><section class="chapter searchable" id="ch06" data-title="条件判断与错误处理">
+<div class="chapter-head"><div class="chapter-no">06</div><div><h2>条件判断与错误处理</h2><p>when 不是为了把 Playbook 写成复杂程序，而是让“同一份自动化”能根据机器实际情况做正确的事情。</p></div><label class="chapter-check"><input type="checkbox" data-progress="06"> 学完</label></div>
+
+<div class="lecture">
+<p>条件判断的触发点通常有三类：机器自身不同（facts）、用户输入不同（vars）、前一个任务结果不同（register）。讲义列出的场景——内存阈值、CPU、OS、命令输出、配置变化——都可以放进这三类。</p>
+<h3>when 的第一条规则：变量直接写，不要再套 <code>{{ }}</code></h3>
+<pre><code>when: ansible_memfree_mb &gt; 500
+when: inventory_hostname == 'node1'
+when: item.job == 'developer'</code></pre>
+<p>因为 when 本身就是一个表达式上下文。把变量再写成字符串插值不仅多余，在某些版本还会给 warning。</p>
+
+<h3>数字、字符串、逻辑运算：重点在数据类型</h3>
+<p><code>&gt; &lt; &gt;= &lt;=</code> 做大小比较，<code>== !=</code> 比较相等，<code>and/or/not</code> 组合条件。讲义里用 <code>ansible_distribution_major_version &gt;= '8'</code> 作为示例。这里补一个很实用的习惯：版本 fact 经常是字符串，如果你确实按整数版本判断，写成 <code>(ansible_distribution_major_version | int) &gt;= 8</code> 更稳，避免字符串比较在两位数版本上产生直觉外结果。</p>
+
+<h3>register + when：把返回结果当条件</h3>
+<p>你可以判断 <code>status.rc == 0</code>，也可以用结果测试：<code>status is succeeded</code>、<code>status is changed</code>、<code>status is failed</code>、<code>status is skipped</code>。原讲义写了 success/changed/skip/failed，实际常见测试名以当前 Ansible 帮助为准，考试现场可以通过已有示例或文档确认。</p>
+
+<h3>文件属性测试：先确认“这个路径是在哪台机器上判断”</h3>
+<p>讲义强调 <code>file/directory/link/mount/exists</code> 这类 Jinja 路径测试判断的是控制端/模板执行上下文路径，不是受管节点路径。这一点特别容易误用。如果要判断远端文件是否存在，更推荐 <code>ansible.builtin.stat</code> 注册结果，或者像讲义示例那样执行一个远端探测 task 再 register。</p>
+
+<h3>变量测试与 in</h3>
+<p><code>defined</code>/<code>undefined</code>/<code>none</code> 很适合“这个参数有没有提供”；<code>in</code> 很适合判断组名、设备名、列表成员，例如：</p>
+<pre><code>when: "'dev' in group_names"
+when: "'vdb' in ansible_devices"
+when: ansible_devices.vdb is defined</code></pre>
+<p>这就是模拟题第 11 题判断磁盘是否存在、模拟题第 13 题判断主机属于哪个组的核心。</p>
+
+<h3>Jinja tests：lower / upper / even / odd / divisibleby / subset ...</h3>
+<p>讲义把这些也列了出来。它们不是 RHCE 最核心的背诵点，但你要知道 when 并不只有比较运算符，还可以用“测试”描述类型或性质，例如 <code>var is string</code>、<code>num is even</code>。现场如果遇到陌生 test，不要硬背，优先从题目需要出发。</p>
+
+<h3>block / rescue / always：这是存储题的关键模型</h3>
+<p>block 有两个作用。第一个是“把一组 task 当成一个逻辑单元”，可以在 block 层统一挂 <code>when</code>、<code>become</code> 等。第二个是错误处理：block 里出现失败，就进入 rescue；无论 block 最终成功还是经过 rescue，always 都会执行。</p>
+<pre><code>- block:
+    - name: try 600 MiB
+      lvol:
+        vg: research
+        lv: data
+        size: 600m
+  rescue:
+    - debug:
+        msg: Could not create logical volume of that size
+    - name: fallback 400 MiB
+      lvol:
+        vg: research
+        lv: data
+        size: 400m
+  always:
+    - name: format final LV
+      filesystem:
+        fstype: ext4
+        dev: /dev/research/data</code></pre>
+<p>把它当成异常处理就很好理解：<strong>先尝试理想方案 → 失败时按题目要求降级 → 最后做共同收尾。</strong>第 10/11 题之所以显得难，不是 LVM/分区本身难，而是这种控制流第一次出现。</p>
+<div class="precision"><b>考试思维：</b>不要一上来写 YAML。先画分支：资源不存在怎么办？存在但容量不足怎么办？成功怎么办？最后必做什么？当流程图能说清，block/rescue/always 只是把流程翻译成语法。</div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 10、11、13、17 题是本章直接落点。你要特别练 <code>group_names</code>、<code>ansible_devices</code>、<code>ansible_lvm.vgs</code>、<code>item.job</code> 这几类条件。</div>
+<div class="exercise"><b>随堂训练：</b>如果题目要求“有 research VG 才尝试创建 600M；创建失败则 400M；没有 VG 只输出错误消息”，请先用自然语言写三层判断，不写 YAML。<details><summary>参考拆解</summary><p>第一层：research 是否存在；不存在 → debug。存在 → 进入 block。第二层：尝试 600M；失败 → rescue 输出指定消息并创建 400M。第三层：最终根据题目要求做 filesystem 等收尾。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>06-ansible 的条件判断
+1   条件判断应用场景
+在有的时候 play 的结果依赖于变量、fact 或者是前一个任务的执行结果，或者基于上一个 task 执行返回的结果而决定如何执行后续的 task，这个时候就需要
+用到条件判断。
+条件语句在 Ansible 中的使用场景：
+在目标主机上定义了一个硬限制，比如目标主机的最小内存必须达到多少，才能执行该 task
+捕获一个命令的输出，根据命令输出结果的不同以触发不同的 task
+根据不同目标主机的 facts，以定义不同的 task
+根据目标机的 cpu 的大小，以调优相关应用性能
+用于判断某个服务的配置文件是否发生变更，以确定是否需要重启服务
+                                                                            JSON    复制
+when:   运算符
+
+when 关键字后面的内容默认就会识别为变量，所以我们在引用变量的时候无论是自定义的、fact 事实变量、魔法变量都不要加上 &quot;{{ }}&quot;
+
+
+2   比较运算符
+2.1   数字比较运算符
+                                                                         Markdown   复制
+&gt;：比较两个对象的大小，左边的值大于右边的值，则为真
+&lt;：比较两个对象的大小，左边的值小于右边的值，则为真
+&gt;=：比较两个对象的大小，左边的值大于等于右边的值，则为真
+&lt;=：比较两个对象的大小，左边的值小于等于右边的值，则为真
+
+当我们要安装软件包的时候，可以先提前判断被控节点剩下的磁盘空间是否足够
+案例 1：当被控节点剩余空闲内存空间小于 500M 的时候，就不要执行 task 任务
+                                                                            YAML    复制
+- name: when1
+    hosts: all
+    tasks:
+    - name: task1
+      debug:
+        msg:   这是我第一次使用when条件判断的语句
+    - name: task2
+      debug:
+        msg: ok
+      when: ansible_memfree_mb &gt; 500
+
+案例 2：当被控节点操作系统版本大于等于 8，那么就执行配置 2 个仓库的 task 任务
+                                                                            YAML    复制
+[root@adsl-172-10-0-153 ansible]# cat when2.yaml
+- name: when2
+    hosts: all
+    tasks:
+    - name: configure repository &lt;= 7
+      yum_repository:
+        file: dvd
+        name: dvd
+        description: dvd
+        baseurl: file:///media
+        gpgcheck: 0
+
+        enabled: 1
+      when: ansible_distribution_major_version &lt;= &#x27;7&#x27;
+     - name: configure repository   &gt;= 8
+      yum_repository:
+        file: dvd
+        name: BaseOS
+        description: baseos
+        baseurl: file:///media/BaseOS
+        gpgcheck: 0
+        enabled: 1
+      when: ansible_distribution_major_version &gt;= &#x27;8&#x27;
+
+
+     - name: configure repository   &gt;= 8
+      yum_repository:
+        file: dvd
+        name: AppStream
+        description: appstream
+        baseurl: file:///media/AppStream
+        gpgcheck: 0
+        enabled: 1
+      when: ansible_distribution_major_version &gt;= &#x27;8&#x27;
+
+
+
+
+2.2   字符串比较运算符
+                                                             Markdown   复制
+==：比较两个对象是否相等，相等则返回真。可用于比较字符串和数字
+!=：比较两个对象是否不等，不等则为真。
+
+
+
+案例 1：当被控节点主机名是 node1 的时候，那么执行 debug 模块的任务，输出 node1 ok
+                                                                YAML    复制
+[root@adsl-172-10-0-153 ansible]# cat when3.yaml
+- name: when3
+     hosts: all
+     tasks:
+     - name: task1
+      debug:
+        msg: node1 ok
+      when: inventory_hostname == &#x27;node1&#x27;
+
+
+     - name: task2
+      debug:
+        msg:   所有主机都会输出ok；
+案例 2：当被控节点操作系统不是 RedHat 的时候，那么执行 debug 模块的任务，输出 not redhat
+                                                                YAML    复制
+- name: when3
+     hosts: all
+     tasks:
+     - name: task1
+      debug:
+        msg: not redhat
+      when: ansible_os_family != &#x27;RedHat&#x27;
+
+
+
+
+3   逻辑运算符
+                                                             Markdown   复制
+and：逻辑与，当左边和右边两个表达式同时为真，则返回真
+or：逻辑或，当左右和右边两个表达式任意一个为真，则返回真
+not：逻辑否，对表达式取反
+()：当一组表达式组合在一起，形成一个更大的表达式，组合内的所有表达式都是逻辑与的关系
+
+案例 1：只有当操作系统版本是 RedHat 并且主机的空闲内存大于 100M 的，才执行 task1 任务
+                                                                YAML    复制
+
+- name: when4
+    hosts: all
+    tasks:
+    - name: task1
+       debug:
+        msg: ok
+       when: ansible_os_family == &#x27;RedHat&#x27; and ansible_memfree_mb &gt; 100
+
+案例 2：主机名叫做 node1 的或者主机的内存空间大于 1000M 的，才执行 task1 任务
+                                                                                                                           YAML    复制
+- name: when4
+    hosts: all
+    tasks:
+    - name: task1
+       debug:
+        msg: ok
+       when: inventory_hostname == &#x27;node1&#x27; or ansible_memtotal_mb &gt; 100
+
+案例 3：当主机操作系统是 RedHat 并且主机名是 node1 的，或者，主机剩余内存空间大于 100M 的并且操作系统版本是大于等 9 的，才会执行 task1 任务
+                                                                                                                           YAML    复制
+- name: when4
+    hosts: all
+    tasks:
+    - name: task1
+       debug:
+        msg: ok
+       when: ( ansible_os_family == &#x27;RedHat&#x27; and inventory_hostname == &#x27;node1&#x27; ) or ( ansible_memfree_mb &gt; 100 and ansible_distributi
+on_major_version &gt;= &#x27;9&#x27; )
+
+
+
+
+4   配合 register 注册变量进行判断
+register 注册变量和判断语句联合使用：都是用来判断前面一个 task 任务是否执行成功，然后再决定是否要执行后面的 task 任务
+                                                                                                                           YAML    复制
+- name: register
+    hosts: all
+    tasks:
+    - name: tasks1
+       shell: rm -rf /tmp/*
+       register: status
+
+
+    - name: use debug
+       debug:
+        msg: &quot;{{ status }}&quot;
+
+
+    - name: tasks2
+       shell: touch /tmp/abc
+       when: status.rc == 0
+
+
+
+
+5   文件属性运算符
+                                                                                                                        Markdown   复制
+file：判断指定路径是否为一个文件，是则为真
+directory：判断指定路径是否为一个目录，是则为真
+link：判断指定路径是否为一个软链接，是则为真
+mount：判断指定路径是否为一个挂载点，是则为真
+exists：判断指定路径是否存在，存在则为真
+特别注意：关于路径的所有判断均是判断主控端上的路径，而非被控端上的路径
+案例：如果被控节点不存在/opt/passwd 文件，则把被控节点自己的/etc/passwd 拷贝过去
+                                                                                                                           YAML    复制
+- name: file
+    hosts: all
+    tasks:
+    - name: task
+       shell: ls /opt/passwd
+
+       ignore_errors: yes
+       register: status
+
+
+    - name: task1
+       copy:
+          remote_src: yes
+          src: /etc/passwd
+          dest: /opt/passwd
+       when: status.rc != 0
+
+案例：如果控制节点不存在/opt/passwd 文件，则把被控节点自己的/etc/passwd 拷贝到/opt/目录下
+                                                                        YAML    复制
+- name: file
+    hosts: all
+    tasks:
+    - name: task1
+       copy:
+          remote_src: yes
+          src: /etc/passwd
+          dest: /opt/passwd
+       when: not &#x27;/opt/passwd&#x27; is exists
+
+
+
+
+6   变量运算符
+                                                                     Markdown   复制
+defined   ：判断变量是否已定义，已定义则返回真
+    os: version
+undefined    ：判断变量是否未定义，未定义则返回真
+none ：判断变量的值是否为空，如果变量已定义且值为空，则返回真
+    os:
+
+如果你在使用别人开发的 playbook 的时候，没有传入参数，那么就不会执行任务的 task 任务，你就可以使用变量运算符来代替它
+
+
+7   in 关键字判断
+判断关键字是否在另外一个关键字中
+判断内容是否在一个列表中
+                                                                        YAML    复制
+- name: file
+    hosts: all
+    vars:
+    name1:
+       - a
+       - b
+       - c
+    tasks:
+    - name: tasks
+       debug:
+          msg: ok
+       when: &quot;&#x27;a&#x27; in name1&quot;
+
+                                                                        YAML    复制
+如果被控节点ens160网卡存在，则配置网络信息
+如果被控节点存在/dev/vdb设备，则进行分区
+- name: file
+    hosts: all
+    vars:
+    name1:
+       - a
+       - b
+       - c
+
+    tasks:
+    - name: tasks
+      debug:
+        msg: ok
+      when: &quot;&#x27;nvme0n1&#x27; in ansible_devices&quot;
+
+
+    - name: tasks
+      debug:
+        msg: ok
+      when: ansible_devices.nvme0n1 is defined
+
+
+
+
+8   根据任务执行结果判断
+                                                    YAML   复制
+- name: register
+    hosts: all
+    tasks:
+    - name: create user
+      user:
+        name: aabbcc
+        state: present
+      register: status
+
+
+    - name: use debug
+      debug:
+        msg: ok
+      when: status is success    #   当任务执行成功则判断ok
+
+    配合register注册变量
+     status is success/changed/skip/failed
+
+
+
+
+9   其他的运算符
+                                                    YAML   复制
+判断字符串：
+lower：判断字符串中的所有字母是否都是小写，是则为真
+upper：判断字符串中的所有字母是否都是大写，是则为真
+
+
+
+示例：
+- hosts: test
+    gather_facts: no
+    vars:
+      str1: &quot;abc&quot;
+      str2: &quot;ABC&quot;
+    tasks:
+      - debug:
+            msg: &quot;str1 is all lowercase&quot;
+        when: str1 is lower
+      - debug:
+            msg: &quot;str2 is all uppercase&quot;
+        when: str2 is upper
+
+                                                    YAML   复制
+判断整除：
+even：判断数值是否为偶数，是则为真
+odd：判断数值是否为奇数，是则为真
+divisibleby(num)：判断是否可以整除指定的数值，是则为真
+
+
+
+- hosts: test
+    gather_facts: no
+    vars:
+      num1: 6
+      num2: 8
+      num3: 15
+
+  tasks:
+     - debug:
+          msg: &quot;num1 is an even number&quot;
+      when: num1 is even
+                                                                                Markdown   复制
+其他条件测试：
+subset 判断一个list是不是另一个list的子集：when: a is subset(b)
+superset 判断一个list是不是另一个list的父集：when: b is superset(a)
+string 判断对象是否为一个字符串，是则为真 when: var1 is string
+number 判断对象是否为一个数字，是则为真 when: var3 is number
+
+
+
+
+10   block、rescue、always
+when 判断中，可能多个任务使用的都是一个 when 判断语句来进行判断
+比如；要执行 task1 任务，当主机名是 node1，要执行 task2 任务，当主机名是 node1
+                                                                                   YAML    复制
+- name: task1
+  debug:
+     msg: task1
+  when: inventory_hostname == &#x27;node1&#x27;
+- name: task2
+  debug:
+     msg: task2
+  when: inventory_hostname == &#x27;node1&#x27;
+
+既然多个 task 任务判断条件是一样的，我们可以借助 block 关键字把相同判断条件的任务包裹起来，然后 when 只针对于 block 做判断
+                                                                                   YAML    复制
+- block：
+  - name: task1
+     debug:
+      msg: task1
+
+
+  - name: task2
+     debug:
+      msg: task2
+  when: inventory_hostname == &#x27;node1&#x27;
+
+
+
+
+block 配合 rescue 关键字实现错误的任务处理，就是说如果 block 中的任务有一个执行失败了，那么就会执行 rescue 关键字中的任务，如果 block 中没有任务
+执行失败，则不会执行 rescue 关键字中的任务
+                                                                                   YAML    复制
+- name: block
+  hosts: all
+  tasks:
+  - block:
+     - name: task3
+      debug:
+          msg: taks3
+     - name: task1
+      shell: useradd root
+     when: inventory_hostname == &#x27;node1&#x27;
+     rescue:
+     - name: rescue1
+      debug:
+          msg: resuce1
+
+
+
+
+always 关键字，配合 block 使用的，无论 block 中的任务执行成功还是执行失败，最终都会执行 always 关键字中的任务
+  [root@adsl-172-10-0-153 ansible]# cat block.yaml                                 YAML    复制
+[root@adsl-172-10-0-153 ansible]# cat block.yaml
+- name: block
+  hosts: all
+
+  tasks:
+  - block:
+   - name: task3
+     debug:
+       msg: taks3
+   - name: task1
+     debug:
+       msg: taks1
+   rescue:
+   - name: rescue1
+     debug:
+       msg: resuce1
+   always:
+   - name: always
+     debug:
+       msg: always
+   when: inventory_hostname == &#x27;node1&#x27;
+
+block 实现的效果：
+ 1. 可以将多个判断条件一样的任务包裹起来进行判断，这样的话就可以少写一些 when 判断了
+ 2. block 配合 rescue 可以实现错误处理，block 任务执行失败了就会执行 rescue 的任务
+ 3. block、rescue、always 三者一般联合使用
+
+</pre></details>
+</section><section class="chapter searchable" id="ch07" data-title="循环">
+<div class="chapter-head"><div class="chapter-no">07</div><div><h2>循环</h2><p>循环不是为了炫技，而是把“同一种任务对很多数据重复执行”压缩成一个 task。第 17 题批量创建用户就是最典型的考试场景。</p></div><label class="chapter-check"><input type="checkbox" data-progress="07"> 学完</label></div>
+
+<div class="lecture">
+<p>旧式写法有很多 <code>with_*</code>：讲义重点讲了 <code>with_items</code> 循环列表、<code>with_dict</code> 循环字典。Ansible 2.5 以后更推荐统一使用 <code>loop</code>。所以你在备考中要<strong>看得懂 with_items/with_dict，但优先练 loop</strong>。</p>
+<h3>列表循环：每一轮的数据都叫 item</h3>
+<pre><code>- name: create files
+  file:
+    path: "/opt/{{ item }}"
+    state: touch
+  loop:
+    - file1
+    - file2
+    - file3</code></pre>
+<p>如果列表放在变量里，<code>loop: "{{ files }}"</code>。核心不在语法，而在“task 的模块参数里哪些位置随着 item 变化”。</p>
+
+<h3>字典循环：先把结构变成可迭代的列表</h3>
+<p><code>with_dict</code> 每一轮 item 会带 <code>key</code> 和 <code>value</code>；如果你用 loop，则常见做法是 <code>dict2items</code>：</p>
+<pre><code>vars:
+  users:
+    alice: 1001
+    bob: 1002
+
+tasks:
+  - debug:
+      msg: "{{ item.key }} -> {{ item.value }}"
+    loop: "{{ users | dict2items }}"</code></pre>
+<p>这正好把下一章 Jinja2 filter 的概念提前串起来：过滤器不是只做“字符串美化”，也可以改变数据结构，让它适合后续操作。</p>
+
+<h3>考试里更常见的是“列表里放字典”</h3>
+<p>模拟题的 user_list.yml 往往不是一个简单字符串列表，而是类似：</p>
+<pre><code>users:
+  - name: user1
+    uid: 2001
+    job: developer
+  - name: user2
+    uid: 2002
+    job: manager</code></pre>
+<p>这时直接 <code>loop: "{{ users }}"</code>，然后用 <code>item.name</code>、<code>item.uid</code>、<code>item.job</code>。再叠加 <code>when: item.job == 'developer'</code>，就完成“循环 + 分类”。</p>
+
+<div class="precision"><b>小优化：</b>有些模块本身支持一次传列表，例如软件包模块的 <code>name</code> 可以是列表。为了可读性和效率，真实项目里不一定每次都 loop；但考试里按题目表达清楚更重要，不必为了“最优雅”增加复杂度。</div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 3 题可以 loop 安装多个包；第 17 题必须熟练 loop 用户列表并结合 when。第 12 题的 Jinja2 for 也是“循环思想”，只是发生在模板渲染阶段。</div>
+<div class="exercise"><b>随堂小测：</b>为什么第 17 题不能简单写 10 个 user task？<details><summary>答案</summary><p>技术上可以，但题目把用户数据放在外部列表里，就是在考“数据驱动”。正确模型是一份用户数据 + 一个 user task + loop + when，这样用户数量变化时逻辑不用改。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>07-ansible 的循环语句
+shell 脚本中，使用 for、while 循环、until 循环
+在 ansible 中，利用三个关键字来实现循环
+    with 系列,属于 withx 关键字的，通过 with 这种方式来实现循环
+        with_items：循环列表的
+        with_dict：循环字典的
+在 2.5 版本之后，推荐使用 loop 关键字实现循环。默认支持列表循环的，如果要支持字典循环的话需要借助一个 jinja2 过滤器来转换格式
+
+
+with_items 循环列表
+案例：通过 with_items 关键字实现 file1 到 file4 文件的批量创建，使用 file 模块使用
+第一种循环方式：定义一个变量，这个变量的值是列表
+                                                                                YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat xunhuan1.yaml
+- name: play
+  hosts: all
+  vars:
+    files:
+     - file1
+     - file2
+     - file3
+  tasks:
+  - name: task
+    file:
+     name: &quot;{{ item }}&quot;
+     state: touch
+    with_items: &quot;{{ files }}&quot;
+
+第二种循环方式：直接在 with_items 关键字下面写上要循环的内容
+                                                                                YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat xunhuan1.yaml
+- name: play
+  hosts: all
+  tasks:
+  - name: task
+    file:
+     name: &quot;{{ item }}&quot;
+     state: touch
+    with_items:
+    - file1
+    - file2
+    - file3
+    - file4
+
+loop 关键默认也支持循环列表，with_items 怎么使用，loop 就怎么使用。还是上面的案例，如果使用 loop 关键字进行循环的话，可以这么写
+第一种循环方式：定义一个变量，这个变量的值是列表
+                                                                                YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat xunhuan1.yaml
+- name: play
+  hosts: all
+  vars:
+    files:
+     - file1
+     - file2
+
+         - file3
+    tasks:
+    - name: task
+     file:
+         name: &quot;{{ item }}&quot;
+         state: touch
+     loop: &quot;{{ files }}&quot;
+第二种循环方式：直接在 with_items 关键字下面写上要循环的内容
+                                                                YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat xunhuan1.yaml
+- name: play
+    hosts: all
+    tasks:
+    - name: task
+     file:
+         name: &quot;{{ item }}&quot;
+         state: touch
+     loop:
+     - file1
+     - file2
+     - file3
+     - file4
+
+
+
+
+with_dict 循环字典
+字典，对象：以键值对的方式存在的，在 yaml 中，key: value 就是字典类型
+                                                                YAML   复制
+- name: play
+    hosts: all
+    vars:
+     name:
+         name1: user1
+         name2: user2
+         name3: user3
+         name4: user4
+    tasks:
+    - name: task
+     debug:
+         msg: &quot;{{ item }}&quot;
+     with_dict: &quot;{{ name }}&quot;
+
+                                                                JSON   复制
+ok: [node1] =&gt; (item={&#x27;key&#x27;: &#x27;name1&#x27;, &#x27;value&#x27;: &#x27;user1&#x27;}) =&gt; {
+     &quot;msg&quot;: {
+            &quot;key&quot;: &quot;name1&quot;,
+            &quot;value&quot;: &quot;user1&quot;
+     }
+}
+ok: [node1] =&gt; (item={&#x27;key&#x27;: &#x27;name2&#x27;, &#x27;value&#x27;: &#x27;user2&#x27;}) =&gt; {
+     &quot;msg&quot;: {
+            &quot;key&quot;: &quot;name2&quot;,
+            &quot;value&quot;: &quot;user2&quot;
+     }
+}
+ok: [node1] =&gt; (item={&#x27;key&#x27;: &#x27;name3&#x27;, &#x27;value&#x27;: &#x27;user3&#x27;}) =&gt; {
+     &quot;msg&quot;: {
+            &quot;key&quot;: &quot;name3&quot;,
+            &quot;value&quot;: &quot;user3&quot;
+     }
+}
+ok: [node1] =&gt; (item={&#x27;key&#x27;: &#x27;name4&#x27;, &#x27;value&#x27;: &#x27;user4&#x27;}) =&gt; {
+     &quot;msg&quot;: {
+            &quot;key&quot;: &quot;name4&quot;,
+            &quot;value&quot;: &quot;user4&quot;
+     }
+
+}
+ok: [node2] =&gt; (item={&#x27;key&#x27;: &#x27;name1&#x27;, &#x27;value&#x27;: &#x27;user1&#x27;}) =&gt; {
+    &quot;msg&quot;: {
+        &quot;key&quot;: &quot;name1&quot;,
+        &quot;value&quot;: &quot;user1&quot;
+    }
+}
+ok: [node2] =&gt; (item={&#x27;key&#x27;: &#x27;name2&#x27;, &#x27;value&#x27;: &#x27;user2&#x27;}) =&gt; {
+    &quot;msg&quot;: {
+        &quot;key&quot;: &quot;name2&quot;,
+        &quot;value&quot;: &quot;user2&quot;
+    }
+}
+ok: [node2] =&gt; (item={&#x27;key&#x27;: &#x27;name3&#x27;, &#x27;value&#x27;: &#x27;user3&#x27;}) =&gt; {
+    &quot;msg&quot;: {
+        &quot;key&quot;: &quot;name3&quot;,
+        &quot;value&quot;: &quot;user3&quot;
+    }
+}
+ok: [node2] =&gt; (item={&#x27;key&#x27;: &#x27;name4&#x27;, &#x27;value&#x27;: &#x27;user4&#x27;}) =&gt; {
+    &quot;msg&quot;: {
+        &quot;key&quot;: &quot;name4&quot;,
+        &quot;value&quot;: &quot;user4&quot;
+    }
+}
+如果要循环的内容是 key，那么 &quot;{{ item.key }}&quot;
+如果要循环的内容是 value，那么&quot;{{ item.value }}&quot;
+
+loop 关键字要循环字典的话，需要借助外部的工具来实现，这个工具就是 jinja2 过滤器
+jinja2 过滤器就是实现格式转换的，比如可以将明文转换为加密后的密文，比如可以将数字转换为字母
+比如将大写字母转换为小写字母...比如可以将字典格式转化为列表格式
+格式：&quot;{{ 变量名 | jinja2 过滤器 }}&quot;
+    passsword：123456
+                                                                Markdown   复制
+loop: &quot;{{ users | dict2items }}&quot;
+
+
+</pre></details>
+</section><section class="chapter searchable" id="ch08" data-title="文件内容修改模块">
+<div class="chapter-head"><div class="chapter-no">08</div><div><h2>文件内容修改模块</h2><p>文件管理不只有 copy。lineinfile 和 blockinfile 解决的是“我要在既有配置文件里精确维护一行或一段内容”。</p></div><label class="chapter-check"><input type="checkbox" data-progress="08"> 学完</label></div>
+
+<div class="lecture">
+<h3>lineinfile：维护“一整行”的目标状态</h3>
+<p>讲义说得很直白：它不是对某个关键字做局部字符串替换，而是通过 regexp 找到一行，然后让这一整行达到你指定的 <code>line</code>。常用参数包括 <code>path</code>、<code>regexp</code>、<code>line</code>、<code>insertbefore</code>、<code>insertafter</code>、<code>backup</code>、<code>create</code>、<code>validate</code>、<code>backrefs</code>。</p>
+<pre><code>- name: set SELinux line
+  lineinfile:
+    path: /etc/selinux/config
+    regexp: '^SELINUX='
+    line: 'SELINUX=disabled'
+    backup: yes</code></pre>
+<p>它的幂等性来自“匹配 + 目标行”：第二次跑时，如果那一行已经正确，就不会不断追加重复内容。</p>
+
+<h3>insertbefore / insertafter：不是替换，而是确定插入位置</h3>
+<p>例如讲义在 <code>#Port 22</code> 后插入 <code>Port 2222</code>。实际使用时要注意，原配置里可能已经存在其他 Port 行，所以考试之外的生产场景会更重视 regexp 设计，避免重复定义。</p>
+
+<h3>validate：先在临时文件上做配置语法验证</h3>
+<p>这是非常实用但经常被忽略的参数。模块修改文件前，可以把候选内容交给目标程序自己的校验器，例如 httpd 的 <code>httpd -t -f %s</code>。<code>%s</code> 会被临时文件路径替换。也就是说 Ansible 不理解 httpd 配置语法，它只是把“提交前验一下”这个动作交给 httpd 自己。</p>
+
+<h3>backrefs：正则替换语义要特别小心</h3>
+<p>讲义强调了：<code>backrefs: true</code> 时要求 regexp 真正匹配，没匹配就什么也不做；普通模式下没匹配可能按参数规则插入 line。你在考试里如果只是“确保一整行存在/被替换”，通常不需要复杂 backrefs；知道它是给正则捕获组替换用的即可。</p>
+
+<h3>blockinfile：维护一整段内容</h3>
+<p>它和 lineinfile 的核心差异是 <code>block:</code> 可以放多行，并且默认用 BEGIN/END marker 标出这段内容。下次运行时它通过 marker 找到自己负责的块，实现更新或删除。</p>
+<pre><code>- name: maintain managed block
+  blockinfile:
+    path: /opt/abc
+    create: yes
+    block: |
+      abc
+      123
+      456</code></pre>
+<p>如果 <code>state: absent</code>，它会按 marker 移除这块受管理内容。你可以自定义 marker，但最好保持能唯一识别。</p>
+
+<div class="model"><div class="model-title">文件内容模块的选择</div><div class="chips"><span>整个文件固定内容 → copy</span><span>整个文件带变量 → template</span><span>维护一行 → lineinfile</span><span>维护一段 → blockinfile</span><span>纯正则字符串替换 → replace</span></div></div>
+</div>
+<div class="exam-box"><b>考试连接：</b>你这套模拟题里“硬件报告”答案用了 <code>replace</code> 修改占位符，其他版本题库也很容易出现 lineinfile/blockinfile。别把所有文件题都条件反射写成 shell + sed。</div>
+<div class="exercise"><b>随堂判断：</b>“配置文件 95% 都一样，但不同主机 Listen IP 不同”应该选 lineinfile 还是 template？<details><summary>答案</summary><p>更适合 template。lineinfile 适合在既有文件中维护少量行；如果整份配置是一个受控模板、只是若干值随主机变化，template 更清晰。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>08-文件内容修改模块
+lineinfile 模块
+针对于文件内容修改的模块，仅支持一次修改、删除一行内容（不能对关键字操作，只能操作一整行内容！）
+  常用参数
+                                                                                    Markdown   复制
+path：要修改的文件
+regexp：正则表达式匹配要修改的行
+line：修改或者插入行的内容
+insertbefore：在匹配的行前面插入
+insertafter：在匹配的行后面插入
+backup：是否备份文件
+create：文件不存在则创建文件
+validate：验证文件修改的有效性，需要文件自带验证机制
+  比如如果修改的是httpd配置文件，校验的时候其实是调用httpd命令自己做校验
+  比如如果修改的是sudo配置文件，校验的时候其实是调用sudoedit方式来校验
+  就是说，本身lineinfile不做校验机制，它是调用修改的配置文件本身的校验来实现校验的
+backrefs: 如果为false，那么regexp没有匹配到的内容则会在文件末尾新增，如果为yes，那么regexp必须严格匹配上，如果没有匹配上则什么都不做
+
+
+
+案例 1：将所有的被控节点永久关闭 SELinux
+                                                                                       YAML    复制
+[root@adsl-172-10-0-153 ansible]# cat lineinfile.yaml
+- name: lineinfile
+  hosts: all
+  tasks:
+  - name: task1
+       lineinfile:
+        path: /etc/selinux/config 表示我要操作的文件是什么
+                                     #
+        regexp: ^SELINUX=   # 表示我要匹配的关键字所在的行
+        line: SELINUX=disabled # 表示我要替换关键字所在行的所有的内容
+        backup: yes
+
+案例 2：修改 sshd 配置文件，在#Port 22 下面添加一行内容 Port 2222
+                                                                                       YAML    复制
+[root@adsl-172-10-0-153 ansible]# vim lineinfile.yaml
+- name: lineinfile
+  hosts: all
+  tasks:
+  - name: task1
+       lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: ^#Port 22
+        line: Port 2222
+        backup: yes
+
+                                                                                       YAML    复制
+- name: lineinfile
+  hosts: all
+  tasks:
+  - name: task1
+       lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: askldadhkjjahdkjlasd
+        line: Port 22
+        backrefs: false
+        validate: httpd -t -f %s
+        state: present
+
+
+
+
+blockinfile 模块
+
+针对于文件内容修改的模块，支持多行内容修改、删除操作
+和 lineinfile 模块的参数一样，多了 2 个参数：
+                                                         纯文本    复制
+block：操作内容
+marker：标记
+
+
+
+                                                         YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat blockinfile.yaml
+- name: blockinfile
+  hosts: all
+  tasks:
+  - name: task
+      blockinfile:
+        path: /opt/abc
+        create: yes
+        block: |
+         abc
+         123
+         456
+
+                                                         Bash   复制
+
+[root@adsl-172-10-0-154 ~]# cat /opt/abc
+# BEGIN ANSIBLE MANAGED BLOCK
+abc
+123
+456
+# END ANSIBLE MANAGED BLOCK
+
+
+
+
+删除多行内容
+                                                         YAML   复制
+[root@adsl-172-10-0-153 ansible]# cat blockinfile.yaml
+- name: blockinfile
+  hosts: all
+  tasks:
+  - name: task
+      blockinfile:
+        path: /opt/abc
+        create: yes
+        marker: &quot;# {mark} ANSIBLE MANAGED BLOCK&quot;
+        state: absent
+
+
+</pre></details>
+</section><section class="chapter searchable" id="ch09" data-title="Jinja2 模板">
+<div class="chapter-head"><div class="chapter-no">09</div><div><h2>Jinja2 模板</h2><p>Jinja2 是把“同一份配置骨架”渲染成“每台机器自己的最终文件”。它和 Facts、Variables、Magic Variables 连起来以后，很多综合题就突然顺了。</p></div><label class="chapter-check"><input type="checkbox" data-progress="09"> 学完</label></div>
+
+<div class="lecture">
+<p>讲义定义得很好：Jinja2 模板就是一个带变量、条件、循环的文本文件。它通常仍然长得像原配置文件，只是在那些每台机器不同的位置插入模板表达式。Ansible 在发送前渲染，再用 <code>template</code> 模块把最终文件放到目标节点。</p>
+<div class="precision"><b>为什么不能用 copy：</b><code>copy</code> 把内容当普通字节；<code>template</code> 会经过 Jinja2 引擎。模板里写了 <code>{{ ansible_default_ipv4.address }}</code> 却用 copy，远端看到的很可能就是这串大括号，而不是 IP。</div>
+
+<h3>变量表达式：<code>{{ ... }}</code></h3>
+<pre><code>Listen {{ ansible_ens160.ipv4.address }}:80</code></pre>
+<p>最值得理解的是“值从哪里来”。模板不是自己知道网卡地址，它只是引用了 play 执行时已经存在的 facts/vars。模板只是表现层。</p>
+
+<h3>条件：让一份模板适配不同硬件</h3>
+<pre><code>{% if ansible_ens224 is defined %}
+Listen {{ ansible_ens224.ipv4.address }}:80
+{% elif ansible_ens160 is defined %}
+Listen {{ ansible_ens160.ipv4.address }}:80
+{% else %}
+Listen 80
+{% endif %}</code></pre>
+<p>这个例子很漂亮：优先 ens224，没有就 ens160，再没有就监听所有地址。你可以看到 when 是“决定 task 执不执行”，Jinja if 是“决定输出文件里渲染哪一段”。不要混。</p>
+
+<h3>循环：把 Inventory 展开成文本</h3>
+<p>模拟题第 12 题正是这个模型：</p>
+<pre><code>127.0.0.1 localhost localhost.localdomain
+::1 localhost localhost.localdomain
+{% for host in groups.all %}
+{{ hostvars[host].ansible_default_ipv4.address }} {{ hostvars[host].ansible_fqdn }} {{ hostvars[host].ansible_hostname }}
+{% endfor %}</code></pre>
+<p><code>groups.all</code> 给你 host 名列表；<code>hostvars[host]</code> 把“正在循环到的 host 名”换成它的变量字典；facts 再给出 IP/FQDN/hostname。这一题本质上就是<strong>Inventory 关系 + Facts 数据 + Jinja 循环</strong>。</p>
+
+<h3>过滤器：对数据做最后一公里转换</h3>
+<p>讲义列了三个最重要的：</p>
+<table><tr><th>Filter</th><th>用途</th><th>考试落点</th></tr>
+<tr><td><code>default('NONE')</code></td><td>变量/属性没有值时给默认值</td><td>硬件报告里 vdb 不存在时输出 NONE</td></tr>
+<tr><td><code>password_hash('sha512')</code></td><td>把明文密码转换为系统 user 模块所需哈希</td><td>创建用户题</td></tr>
+<tr><td><code>dict2items</code></td><td>字典 → 可循环的 key/value 列表</td><td>loop 字典</td></tr></table>
+<p>你不需要背一百个 filter。考试里看到“如果不存在给默认值”“需要密码哈希”“字典要 loop”，再想到这几个就够。</p>
+
+<div class="model"><div class="model-title">Template 的本质公式</div><div class="flow"><span>模板骨架</span><b>+</b><span>变量 / Facts / Magic Vars</span><b>+</b><span>if / for / filters</span><b>→</b><span>每台主机最终配置文件</span></div></div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 8 题自定义 apache role 的 index.html.j2、第 12 题 hosts.j2、第 15 题“缺失值 NONE”的 default 思维、第 17 题 password_hash 都和这一章有关。</div>
+<div class="exercise"><b>随堂练习：</b>如果 bastion 没有 vdb，但其他机器有，你想在报告中输出 <code>vdb_size=NONE</code>，为什么 <code>default</code> 比先写一个复杂 when 分支更自然？<details><summary>答案</summary><p>因为这是一个“取值失败时的默认表现”，而不是整项 task 是否执行的问题。把 fallback 放在表达式层最贴近需求。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>09-jinja2 模板
+jinja2 模板
+这个模板实际上是一个带有 ansible 的变量和判断、循环语句的一个文件
+大多数的情况下，被控节点修改配置文件的话，其实只有一部分的内容是不一样的，其余的内容是完全一样的
+那么在这种情况下，我们可以利用 jinja2 模板文件来实现管理
+所以所谓的 jinja2 模板就是一个带有变量内容的文本文件，下发到被控节点的时候会自动将其变量渲染会具体的值
+如果要传输 jinja2 模板文件，一定要使用 template 模块
+因为 template 模块支持将模板文件中的变量、循环、判断渲染出来，不要使用 copy 模块
+                                                                                                YAML    复制
+[root@adsl-172-10-0-153 ansible]# cat jinja2.yaml
+- name: jinja2
+  hosts: all
+  tasks:
+  - name: jinja2
+      template:
+         src: httpd.conf.j2
+         dest: /etc/httpd/conf/httpd.conf
+[root@adsl-172-10-0-153 ansible]# grep ansible_ httpd.conf.j2
+Listen {{ansible_ens160.ipv4.address }}:80
+
+
+
+
+有一些情况下， 被控节点有多张网卡，你想要优先让其监听在 ens224 网卡上，如果没有 ens224 网卡，那么就监听到 ens160 网卡上，如果 ens160 网卡也
+不存在，那么就监听在所有的网卡 IP 地址上
+                                                                                             Markdown   复制
+{% if 条件表达式 %}
+执行语句1
+{% elif 条件表达式 %}
+执行语句2
+.....
+{% else %}
+执行语句
+{% endif %}
+
+                                                                                             Markdown   复制
+{% if ansible_ens224 is defined %}
+Listen {{ ansible_ens224.ipv4.address }}:80
+{% elif ansible_ens160 is defined %}
+Listen {{ ansible_ens160.ipv4.address }}:80
+{% else %}
+Listen 80
+{% endif %}
+
+
+
+
+jinja2 模板文件中除了支持判断，还支持循环
+                                                                                             Markdown   复制
+{% for   变量名 in 要循环的值 %}
+内容
+{% endfor%}
+
+                                                                                             Markdown   复制
+[root@adsl-172-10-0-153 ansible]# cat hosts.j2
+127.0.0.1     localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1           localhost localhost.localdomain localhost6 localhost6.localdomain6
+{% for hosts in groups.all %}
+{{ hostvars[hosts].ansible_ens160.ipv4.address }} {{ hostvars[hosts].inventory_hostname }}
+{% endfor %}
+
+jinja2 过滤器
+jinja2 过滤器实现的功能是转换
+                                                                      Markdown   复制
+ &quot;{{   变量名 | jinja2过滤器 }}&quot;
+
+1.default 过滤器：如果变量没有赋值的话，default 过滤器会默认赋予一个值
+                                                                         YAML    复制
+ &quot;{{   变量名 | default(&#x27;值&#x27;) }}&quot;
+ [root@adsl-172-10-0-153 ansible]# cat default.yaml
+ - name: default
+   hosts: all
+   vars:
+       var1: rhel9
+   tasks:
+   - name: task
+       debug:
+        msg: &quot;{{ var1 | default(&#x27;nihao&#x27;) }}&quot;
+
+
+
+2.password_hash 过滤器：进行加密的，采用不同的加密方式对变量的值进行加密，通常应用在用户创建的时候给用户设置密码的场景
+
+3.dict2items 过滤器
+
+</pre></details>
+</section><section class="chapter searchable" id="ch10" data-title="Role 角色管理">
+<div class="chapter-head"><div class="chapter-no">10</div><div><h2>Role 角色管理</h2><p>Role 是“把一个完整 Playbook 项目按职责拆成标准目录”。真正重要的不是目录多，而是你以后知道某类东西应该放在哪里。</p></div><label class="chapter-check"><input type="checkbox" data-progress="10"> 学完</label></div>
+
+<div class="lecture">
+<p>讲义从企业部署切入：真正可复用的大型自动化很少是一份几百行 playbook 从头写到底，而是拆成 role。Role 让变量、tasks、handlers、模板、普通文件、元数据各归各位，然后用一个很短的 playbook 调用。</p>
+<div class="role-tree"><code>roles/apache/</code><span>tasks/main.yml —— 主任务</span><span>handlers/main.yml —— 被 notify 的动作</span><span>templates/ —— Jinja2 模板</span><span>files/ —— 普通静态文件</span><span>defaults/main.yml —— 默认变量（低优先级，适合给用户覆盖）</span><span>vars/main.yml —— role 内变量（优先级更高）</span><span>meta/main.yml —— 角色元数据 / 依赖</span><span>README.md —— 使用说明</span><span>tests/ —— 测试骨架</span></div>
+<p>有了这棵树，你就不需要“背十个目录”，因为目录名基本就是内容类型。</p>
+
+<h3>创建 Role：先 init，再把原 Playbook 拆进去</h3>
+<pre><code>ansible-galaxy role init apache</code></pre>
+<p>然后把原来 playbook 里的 tasks 放进 <code>tasks/main.yml</code>，handlers 放进 <code>handlers/main.yml</code>，模板放 templates，copy 的静态文件放 files。Role 内引用 template/file 时通常可以只写相对文件名，不用手工拼角色目录。</p>
+
+<h3>调用 Role：Playbook 会变得非常短</h3>
+<pre><code>- name: use apache role
+  hosts: webservers
+  roles:
+    - apache</code></pre>
+<p><code>roles_path</code> 决定 Ansible 去哪里找角色。考试第 1 题要求你把这个路径配好，第 8/9 题才能顺利调用。</p>
+
+<h3>defaults vs vars：不是“两个地方都能放变量”这么简单</h3>
+<p>讲义说 defaults 优先级比 vars 低，这非常关键。<code>defaults/main.yml</code> 更适合“这个角色给一个合理默认值，使用者可覆盖”；<code>vars/main.yml</code> 更像角色内部强约束。你在真实项目里希望角色可复用时，越希望外部定制的参数越应该倾向 defaults。</p>
+
+<h3>Ansible Galaxy：既是命令，也是生态入口</h3>
+<p>讲义列了 init、list、search、install、remove。考试里最常见的是两类：根据 requirements.yml 从 URL 安装角色；或者 <code>role init</code> 自己创建一个 role。不要把 Galaxy 理解成“只能联网下载公开角色”，它也可以从指定 tar.gz URL/文件安装。</p>
+
+<h3>RHEL System Roles：考试里最省力也最容易“不会查”的部分</h3>
+<p>红帽提供的 system roles 已经把 timesync、SELinux 等复杂配置封装好了。你真正要做的是：找到角色 → 阅读 README → 确认变量名/结构 → 在 play 里设置 vars → roles 调用。这里千万别把变量名硬背成负担。你上传的模拟题答案本身就是通过查看 role README 找 <code>selinux_state</code>、timesync 变量示例。</p>
+<div class="model"><div class="model-title">Role 题的固定动作</div><div class="flow"><span>确认角色存在</span><b>→</b><span>打开 README</span><b>→</b><span>找最小变量示例</span><b>→</b><span>写 hosts + vars + roles</span><b>→</b><span>运行并验证系统状态</span></div></div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 4/5 题 system roles，第 6 题 Galaxy requirements，第 8 题自己创建 apache role，第 9 题调用 balancer/phpinfo。它们看起来是 6 道题，其实核心只有“Role 的目录/调用/安装/查 README”。</div>
+<div class="exercise"><b>随堂问题：</b>Role 中 index.html.j2 放在哪里？如果是一个无需模板渲染的证书文件又放在哪里？<details><summary>答案</summary><p>Jinja2 模板放 <code>templates/</code>；普通静态文件放 <code>files/</code>。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>10-ansible 的角色管理
+role 角色
+如果你使用的是企业公司的产品，那么如果他采用的是 ansible 来实现部署的话，一定是通过角色的方式来实现部署的。也就是说，实际上开发者开发的是
+role 角色
+roles 角色就是将一个完整的项目的 playbook 进行的拆分，比如将定义变量的部分拆分出来的一个文件，将执行 task 任务的部分拆分出来为一个文件，将
+handlers 特殊任务的部分拆分出来为一个文件，将拷贝到其他节点的引用的这些文件拆分出来保存到一个目录下，将引用的 jinja2 模板文件拆分出来保存到一
+个目录
+而以上这些文件和这些目录都会存储到一个大的目录下，这个大的目录的名字就是角色的名字
+roles 出现是为了移植 playbook
+
+vars 目录下面存在一个 main.yml 文件：这个文件就是定义变量的，相当于在 playbook 中通过 vars 关键字定义的变量
+tests：测试的，没啥用
+templates：目录下应该存放的是要拷贝到被控节点的 jinja2 模板文件
+tasks 目录下存在一个 main.yml 文件：这个文件中定义的就是 playbook 中要执行的所有的 task 任务
+README.md：帮助文档，你开发的这个角色怎么用，有什么用
+meta 目录下存在一个 main.yml：这个文件定义角色基本信息
+handlers 目录下存在一个 main.yml：这个文件定义了 handlers 触发的特殊任务
+files 目录：保存的是拷贝到被控节点的文件，比如 copy 模块引用的文件要拷贝走
+defaults 目录下存在一个 main.yml 文件：这个文件作用和 vars 目录下的文件一样的都是定义变量的，但是这里定义的变量优先级比 vars 目录下定义的变量优
+先级要低
+
+1.修改 ansible.cfg 配置文件，定义 roles 角色的搜索目录
+                                                                                                         Bash   复制
+[root@adsl-172-10-0-153 roles]# grep roles_path /etc/ansible/ansible.cfg
+roles_path=/etc/ansible/roles
+
+
+
+2.初始化角色的目录结构
+                                                                                                         Bash   复制
+[root@adsl-172-10-0-153 roles]# pwd
+/etc/ansible/roles
+[root@adsl-172-10-0-153 roles]# ansible-galaxy role init apache
+- Role apache was created successfully
+[root@adsl-172-10-0-153 roles]# ll
+total 0
+drwxr-xr-x. 10 root root 135 Apr 25 14:07 apache
+
+3.进入角色的目录下，将 playbook 中的内容拆分到角色下的不同目录中
+                                                                                                     Markdown   复制
+#   将jinja2模板文件放到template目录下
+[root@adsl-172-10-0-153 roles]# cp /etc/ansible/index.html.j2 /etc/ansible/roles/apache/templates/
+
+
+#   拆分task任务
+[root@adsl-172-10-0-153 roles]# vim /etc/ansible/roles/apache/tasks/main.yml
+
+
+#   拆分handlers任务
+
+[root@adsl-172-10-0-153 roles]# vim /etc/ansible/roles/apache/handlers/main.yml
+
+
+
+4.执行角色
+                                                                                     YAML    复制
+#编写一个playbook去调用角色
+[root@adsl-172-10-0-153 roles]# cat /etc/ansible/roles.yaml
+- name: use apache roles
+     hosts: all
+     roles:
+     - apache
+
+
+
+这里的 apache 角色，将会去/etc/ansible/roles 目录下查找，因为 ansible 配置文件中你定义了角色的搜索路径
+
+红帽为 ansible 提供了很多关于管理系统的 roles 角色，我们可以通过安装软件包得到这些角色，直接调用
+rhel-system-roles.noarch
+https://galaxy.ansible.com/
+
+     管理角色
+                                                                                  Markdown   复制
+#   初始化角色目录结构
+ansible-galaxy role init   角色名
+#   列出角色
+ansible-galaxy role list
+
+
+#   搜索角色
+ansible-galaxy search
+
+
+#   安装角色
+    ansible-galaxy role install 角色名
+     ansible-galaxy role install url地址
+
+
+#   删除角色
+ansible-galaxy role remove
+或者直接rm -rf 删除目录
+
+</pre></details>
+</section><section class="chapter searchable" id="ch11" data-title="Ansible Vault">
+<div class="chapter-head"><div class="chapter-no">11</div><div><h2>Ansible Vault</h2><p>Vault 解决的是“Playbook 需要秘密，但秘密又不能裸写在普通 YAML 里”。它不是密码管理系统的全部，只是 Ansible 数据文件的加密机制。</p></div><label class="chapter-check"><input type="checkbox" data-progress="11"> 学完</label></div>
+
+<div class="lecture">
+<p>讲义强调了一个很直接的事实：<code>ansible-vault</code> 可以对 Playbook、变量文件、模板等 Ansible 使用的数据文件进行加密。考试最常见的是加密变量文件，因为逻辑仍保持可读，而密码值被保护。</p>
+<pre><code>ansible-vault create secret.yml
+ansible-vault encrypt locker.yml
+ansible-vault view locker.yml
+ansible-vault edit locker.yml
+ansible-vault decrypt locker.yml
+ansible-vault rekey salaries.yml</code></pre>
+<p>最重要的操作习惯是：<strong>文件加密之后，不要用普通编辑器把密文当文本改。</strong>使用 <code>ansible-vault edit</code>，或者明确 decrypt → 修改 → encrypt。普通编辑密文很容易破坏 Vault 格式。</p>
+
+<h3>密码文件：让 Playbook 非交互运行</h3>
+<p>模拟题要求 <code>/home/devops/ansible/secret.txt</code>，然后运行：</p>
+<pre><code>ansible-playbook --vault-password-file=secret.txt users.yml</code></pre>
+<p>这体现了考试评分的关键：系统可能自动重放你的 Playbook，所以不能依赖人工输入密码的交互过程。密码文件路径、权限、Playbook 是否真的能使用它，都是最终结果的一部分。</p>
+
+<h3>rekey：不是“解密再重新加密”的手工流程</h3>
+<p><code>ansible-vault rekey</code> 专门用于把现有 Vault 从旧密码迁移到新密码，并保持文件加密。模拟题第 18 题几乎就是命令识别题，别复杂化。</p>
+
+<div class="precision"><b>本质上：</b>Vault 保护的是“静态文件里的秘密”。它并不会自动解决谁能读密码文件、运行时秘密如何审计等完整安全问题。考试范围内你先把 encrypt/view/edit/rekey/password-file 做稳。</div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 16 题创建 Vault、第 17 题引用 Vault 变量并给用户生成 SHA512 哈希、第 18 题 rekey。三题连在一起学比拆开背快得多。</div>
+<div class="exercise"><b>随堂小测：</b>locker.yml 已经加密，你突然想把 pw_manager 改掉，最稳的命令是什么？<details><summary>答案</summary><p><code>ansible-vault edit locker.yml</code>。不要直接 vim 密文。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>11-ansible-vault 加密
+ansible-vault 针对于任何文件进行加密，比如 playbook、比如变量文件、比如 jinja2 模板文件
+是个文件就能加密
+                                                                                                         Bash   复制
+[root@adsl-172-10-0-153 ansible]# ansible-vault --help
+usage: ansible-vault [-h] [--version] [-v] {create,decrypt,edit,view,encrypt,encrypt_string,rekey} ...
+
+
+encryption/decryption utility for Ansible data files
+
+
+positional arguments:
+  {create,decrypt,edit,view,encrypt,encrypt_string,rekey}
+    create              Create new vault encrypted file
+    decrypt             Decrypt vault encrypted file
+    edit                Edit vault encrypted file
+    view                View vault encrypted file
+    encrypt             Encrypt YAML file
+    encrypt_string      Encrypt a string
+    rekey               Re-key a vault encrypted file
+
+
+optional arguments:
+  --version             show program&#x27;s version number, config file location, configured module search
+                        path, module location, executable location and exit
+  -h, --help            show this help message and exit
+  -v, --verbose         Causes Ansible to print more debug messages. Adding multiple -v will increase
+                        the verbosity, the builtin plugins currently evaluate up to -vvvvvv. A
+                        reasonable level to start is -vvv, connection debugging might require -vvvv.
+
+
+See &#x27;ansible-vault &lt;command&gt; --help&#x27; for more information on a specific command.
+
+一旦使用 ansible 对文件加密了，千万不用通过编辑工具直接去编辑内容，因为会造成文件内容丢失
+只能够通过 ansible-vault 命令进行编辑加密的文件
+
+</pre></details>
+</section><section class="chapter searchable" id="ch12" data-title="Collection 集合">
+<div class="chapter-head"><div class="chapter-no">12</div><div><h2>Collection 集合</h2><p>Collection 是为什么 RHCE 9 会出现“模块明明存在，但我这里找不到”的答案。把它理解成 Ansible 的插件/模块/角色发布包就够了。</p></div><label class="chapter-check"><input type="checkbox" data-progress="12"> 学完</label></div>
+
+<div class="lecture">
+<p>讲义把 collection 的出现归因于 Ansible 生态增长：模块、插件、角色的开发速度和维护主体越来越多，不适合所有东西都绑在 ansible-core 的同一个版本里。于是核心执行引擎和可独立版本化的内容分离。</p>
+<p>一个 Collection 可以包含 <strong>modules、plugins、roles</strong> 等内容。模块完整名称变成 <code>namespace.collection.module</code>，例如 <code>ansible.builtin.yum</code>、<code>community.general.parted</code>（具体模块归属以考试环境安装内容为准）。</p>
+
+<h3>为什么“安装位置”这么重要</h3>
+<p>下载成功不等于 Ansible 能找到。Ansible 会按配置的 collection 搜索路径加载内容。因此第 1 题先配置项目中的 collection 路径，第 7 题再把指定 tar.gz 装进去，是一整套逻辑。</p>
+<pre><code>ansible-galaxy collection install community.general
+ansible-galaxy collection install ./community-general-6.3.0.tar.gz -p mycollections/
+ansible-galaxy collection list</code></pre>
+<p>讲义中配置项写作 <code>collection_path</code>；你这套 RHCE 模拟题答案使用的是 <code>collections_path</code> 形式。不同版本/资料写法容易让人焦虑，最稳的办法是考试环境里用 <code>ansible-config list | grep -i collection</code> 或提供的配置模板确认，不要凭记忆硬争单复数。</p>
+
+<h3>FQCN 的意义</h3>
+<p>当两个 collection 都有同名 module 时，FQCN 能明确指定来源；同时你一眼能看出某个功能是不是 core 自带。看到 <code>ansible.builtin.xxx</code> 就知道它来自 builtin collection；看到其他 namespace，就应该意识到“需要对应 collection 可见”。</p>
+
+<div class="model"><div class="model-title">排查“模块找不到”</div><div class="flow"><span>模块名写对？</span><b>→</b><span>属于哪个 Collection？</span><b>→</b><span>Collection 装了吗？</span><b>→</b><span>装到配置搜索路径了吗？</span><b>→</b><span>Navigator 的 EE 能看见吗？</span></div></div>
+</div>
+<div class="exam-box"><b>考试连接：</b>第 7 题会给你 collection tar 包并要求装到指定 <code>mycollections</code>。它看起来像下载题，实际上是在考“内容包 + 搜索路径”这个模型。</div>
+<div class="exercise"><b>随堂判断：</b>你已经把 collection tar.gz 下载到项目目录，但 <code>ansible-doc</code> 仍找不到里面的模块。最可能还缺什么？<details><summary>答案</summary><p>下载不等于安装。需要 <code>ansible-galaxy collection install ... -p 指定目录</code>，并保证 Ansible 的 collection 搜索路径能看到该目录。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>12-collection 集合
+集合介绍
+集合的概念是从 ansible-core 版本开始的，也就是从 ansible2.10 版本开始
+集合又可以称之为 collection，集合中包括 plugins、roles、modules
+相当于把原来一个完整的 ansible 拆分为了俩个部分，一个是 ansible-core，一个是 collection
+ansible 的维护是社区推动的
+但是模块是谁都可以开发的，有个人有商业公司，也有其他的开源社区
+正是因为模块的开发进度远远超过 ansible 版本更新速度，所以就导致 ansible 版本更新更不上模块的更新速度
+
+在红帽 9 的 RHCE 考试中，你正常做的时候会发现很多模块都没有，这是因为考试的时候没有给你安装集合，所以你看到的模块都是 ansible-core 自带的核心
+模块。你要通过安装集合的方式来得到这些模块
+ansible2.9 以及之前的版本，模块的名字就是 模块名 yum
+ansible-core 版本开始，模块的名字变成了 命令空间.集合名.模块名 ansible.builtin.yum
+
+
+集合管理的命令是 ansible-galaxy
+https://galaxy.ansible.com/ 集合的搜索下载路径
+
+
+
+
+只有把集合安装到对应的目录下，ansible 才能识别到这些集合中的模块等内容
+由 ansible.cfg 配置文件决定的
+collection_path
+                                                                         Markdown   复制
+#   安装集合
+ansible-galaxy collection install community.general
+    通过文件方式来实现集合的安装，批量安装集合
+
+#   列出集合
+ansible-galaxy collection list
+
+
+#删除集合
+直接删除目录即可
+
+</pre></details>
+</section><section class="chapter searchable" id="ch13" data-title="Ansible Navigator">
+<div class="chapter-head"><div class="chapter-no">13</div><div><h2>Ansible Navigator</h2><p>最后把执行方式收回来：你前面学的 Inventory、Playbook、Role、Collection 都没变；Navigator 只是把“执行器”放进一个可控的容器环境。</p></div><label class="chapter-check"><input type="checkbox" data-progress="13"> 学完</label></div>
+
+<div class="lecture">
+<p>传统方式是 <code>ansible-playbook xxx.yml</code>；Navigator 常见考试写法是：</p>
+<pre><code>ansible-navigator run xxx.yml -m stdout</code></pre>
+<p><code>-m stdout</code> 让输出更接近普通 ansible-playbook，备考时最直观。交互模式也能看结果，但考试做题强调速度和可预期输出，stdout 通常更顺手。</p>
+
+<h3>Execution Environment：为什么要用容器镜像</h3>
+<p>它把 Ansible 版本、Python 依赖、部分 collections/plugins 固定在镜像中，避免“我机器上的环境和你机器不一样”。所以讲义说可以通过选择不同 EE 使用不同 Ansible 环境。这个思想和容器化应用是一样的：不是把受管节点装进容器，而是把<strong>自动化执行工具链</strong>装进容器。</p>
+
+<h3>镜像拉取策略：missing 是备考里最容易理解的设置</h3>
+<p>如果 pull policy 过于积极，Navigator 可能尝试联网拉 registry.redhat.io 的镜像并遇到认证/网络问题。讲义建议设为 missing：本地已有镜像就直接用，没有才拉。这也是你模拟题准备环境里 <code>.ansible-navigator.yml</code> 的重要配置。</p>
+<pre><code>ansible-navigator:
+  execution-environment:
+    enabled: true
+    image: utility.lab.example.com/ee-supported-rhel8:latest
+    pull:
+      policy: missing
+  mode: stdout</code></pre>
+
+<h3>为什么老师反复强调“当前目录里要有 ansible.cfg”</h3>
+<p>按这套 RHCE 训练材料，最安全的工作流就是始终在题目指定项目目录（例如 <code>/home/devops/ansible</code>）运行 Navigator，并把 <code>ansible.cfg</code>、inventory、roles、collections 都按项目相对关系组织好。容器化执行会让“宿主机随便哪个目录里的东西都天然可见”这种直觉失效，所以<strong>不要随意 cd 到别处再跑</strong>。</p>
+
+<h3>Artifact 与 replay</h3>
+<p>Navigator 可以保存 playbook artifact JSON，里面记录执行结果。需要回看时可以 replay。备考不一定要求你深入 artifact schema，但要知道看到项目目录里多出来 JSON 并不是“垃圾文件”，而是一次运行的结构化记录。</p>
+
+<h3>Galaxy 仍然是 Galaxy</h3>
+<p>讲义特别提醒：Role/Collection 的安装管理仍使用 <code>ansible-galaxy</code>；Navigator 主要负责运行/探索自动化内容。考试里别看到 Navigator 就把所有命令都改写成 <code>ansible-navigator galaxy ...</code>。</p>
+
+<div class="precision"><b>考试边界：</b>原讲义明确说，正式考试重点是“如何通过 Navigator 运行 Playbook”，不会要求你自己设计复杂 Execution Environment。也就是说，这章别过学：会确认镜像、会在正确目录运行、会 <code>-m stdout</code>，就已经覆盖最重要的考试动作。</div>
+</div>
+<div class="exam-box"><b>考试连接：</b>你整场考试最终是在“项目目录 + ansible.cfg + inventory + playbook/roles/collections + navigator”这套工程里工作。最稳的习惯是每完成一题都在同一项目根目录运行，并用系统命令做最终状态验证。</div>
+<div class="exercise"><b>最后一个随堂问题：</b><code>ansible-playbook users.yml</code> 能跑，但 <code>ansible-navigator run users.yml -m stdout</code> 找不到你刚安装的 collection。你应该从什么角度排查？<details><summary>答案</summary><p>先意识到两次执行环境不同。检查 Navigator 使用的 EE、项目目录、ansible.cfg 的 collection 搜索路径，以及 collection 是否在 EE/项目挂载可见的路径中。不要先怀疑 YAML。</p></details></div>
+
+<details class="raw-notes"><summary>展开：本章原始随堂讲义完整留档</summary><div class="raw-help">这一块保留原讲义全部文本，便于你随时对照老师当时的表达。正文上方已经把这些内容重新串成一条更连续的学习主线。</div><pre>13-ansible-navigator 导航器
+所谓的 ansible 导航器，其实就是在容器中运行 ansible
+当你编写了一个 playbook，你不再是通过 ansible-playbook 去执行了，而是通过 ansible-navigator 命令去执行 playbook
+当你运行的时候，系统会基于一个 ansible 的容器镜像临时运行一个容器，然后把 playbook 放到了容器中去执行
+（容器中会携带 ansible 的各种工具，ansible-playbook ...）
+
+
+
+
+采用导航器的好处：你只需要在宿主机上配置 ansible-navigator 工具即可
+通过导航器运行的 ansible，可以选择不同的执行环境，那么就可以选择不同的 ansible 版本
+  下面是导航器的 rpm 包所在的 ISO 镜像文件
+
+
+  提供了一个执行环境的容器镜像也在上面的 ISO 镜像文件中
+
+                                                                                                                        Bash   复制
+[root@adsl-172-10-0-153 ~]# ansible-navigator images
+--------------------------------------------------------------------------------------------------------------
+Execution environment image and pull policy overview
+--------------------------------------------------------------------------------------------------------------
+Execution environment image name:    registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest
+Execution environment image tag:     latest
+Execution environment pull arguments: None
+Execution environment pull policy:   tag
+Execution environment pull needed:   True
+--------------------------------------------------------------------------------------------------------------
+Updating the execution environment
+--------------------------------------------------------------------------------------------------------------
+Running the command: podman pull registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest
+Trying to pull registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest...
+Error: initializing source docker://registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest: unable to retriev
+e auth token: invalid username/password: unauthorized: Please login to the Red Hat Registry using your Customer Portal credential
+s. Further instructions can be found here: https://access.redhat.com/RegistryAuthentication
+  Error: Execution environment pull failed
+   Hint: Check the execution environment image name, connectivity to and
+         permissions for the registry, and try again
+
+执行的导航器的每一个命令都是在容器中运行的，默认情况下它会去红帽的镜像仓库拉取镜像，而且默认的拉取策略是永远从网络上拉取
+
+
+导航器执行有 2 种方式：
+  交互式
+
+
+
+
+   非交互式 stdout：输出的结果和 ansible-playbook 一样
+   -m stdout 临时指定非交互式
+
+管理 role 和 collection 集合依旧是通过 ansible-galayx 管理
+只有 playbook 的管理才使用导航器
+
+导航器命令
+                                                                                            Markdown   复制
+#   运行playbook
+ansible-navigator run xxx -m stdout
+
+
+
+非常非常非常重要！执行导航器命令的时候，你一定要保证当前目录下有 ansible.cfg，因为导航器执行的时候只能读取到当前目录下的 ansible.cfg 配置文
+件，一旦你切换到了其他的工作目录，那么导航器就无法读到 ansible.cfg 配置文件，那么你在配置文件中定义了所有的东西导航器中都无法识别
+如果使用导航器命令的话，每一次执行都会在当前目录下生成一个 json 的文件，这个文件其实就是执行的反馈信息文件，但是如果直接通过 cat 等工具去看的
+话 有一些不是很清楚，那么这个时候就可以使用 replay 重播这个文件
+
+设置一下，让导航器永远都是 missing 的拉取策略—&gt;定义导航器的配置文件
+我们建议将导航器的配置文件放到用户家目录下的.ansible-navigator.yml 中
+比如你是 root 用户管理的，那么导航器的配置文件 /root/.ansible-navigator.yml
+                                                                                               YAML    复制
+[root@adsl-172-10-0-153 ansible]# ansible-navigator settings --effective     --pp missing
+---
+ansible-navigator:
+    ansible:
+      config:
+        help: false
+      doc:
+        help: false
+        plugin:
+            type: module
+      inventory:
+        entries:
+        - /etc/ansible/hosts
+        help: false
+      playbook:
+        help: false
+    ansible-builder:
+      help: false
+      workdir: /etc/ansible
+    app: settings
+    collection-doc-cache-path: /root/.cache/ansible-navigator/collection_doc_cache.db
+    color:
+      enable: true
+      osc4: true
+    editor:
+      command: vi +{line_number} {filename}
+      console: true
+    exec:
+      command: /bin/bash
+      shell: true
+    execution-environment:
+      container-engine: podman
+      enabled: true
+      image: registry.redhat.io/ansible-automation-platform-22/ee-supported-rhel8:latest
+      pull:
+        policy: missing
+    images:
+      details:
+      - everything
+    logging:
+      append: true
+      file: /etc/ansible/ansible-navigator.log
+      level: warning
+    mode: stdout
+    playbook-artifact:
+      enable: true
+      save-as: &#x27;{playbook_dir}/{playbook_name}-artifact-{time_stamp}.json&#x27;
+    settings:
+      effective: true
+
+  sample: false
+  schema: json
+  sources: false
+ time-zone: UTC
+
+
+
+在正式考试的时候，导航器只会考如何去运行 playbook，不会考取你怎么自己自定义执行环境，也不会考察你怎么配置导航器的配置文件
+
+</pre></details>
+</section>
+<section id="exam" class="chapter searchable"><div class="chapter-head"><div class="chapter-no">EX</div><div><h2>把 13 章重新投影到 19 道模拟题</h2><p>学完以后别按章节复习，改成按题目做整套。下面这张表告诉你每一道题主要在调用哪些章节能力。</p></div></div><div class="exam-map"><table><tr><th>#</th><th>模拟题</th><th>主要章节</th><th>核心能力</th></tr><tr><td>1</td><td>安装和配置 Ansible</td><td>02 / 13</td><td>inventory、ansible.cfg、roles_path、collection 路径、Navigator</td></tr><tr><td>2</td><td>创建受管节点软件仓库</td><td>03</td><td>yum_repository、GPG、验证 repo</td></tr><tr><td>3</td><td>安装软件包</td><td>03 / 07</td><td>yum/dnf、包组、latest、loop / multi-play</td></tr><tr><td>4</td><td>Timesync System Role</td><td>10</td><td>RHEL system roles、README、角色变量</td></tr><tr><td>5</td><td>SELinux System Role</td><td>10</td><td>RHEL system roles、enforcing</td></tr><tr><td>6</td><td>Galaxy 安装角色</td><td>10</td><td>requirements.yml、ansible-galaxy role install</td></tr><tr><td>7</td><td>安装 Collection</td><td>12</td><td>collection install、搜索路径</td></tr><tr><td>8</td><td>创建并使用 apache Role</td><td>03 / 09 / 10</td><td>role init、httpd/firewalld、template、facts</td></tr><tr><td>9</td><td>调用 balancer/phpinfo Roles</td><td>10</td><td>multi-play、roles、HTTP 验证</td></tr><tr><td>10</td><td>逻辑卷</td><td>05 / 06</td><td>facts、ansible_lvm、block/rescue/always、lvol/filesystem</td></tr><tr><td>11</td><td>分区与挂载</td><td>05 / 06</td><td>ansible_devices、parted/filesystem/mount、失败回退</td></tr><tr><td>12</td><td>生成 hosts 文件</td><td>05 / 09</td><td>groups、hostvars、facts、Jinja2 for</td></tr><tr><td>13</td><td>按组修改 /etc/issue</td><td>05 / 06</td><td>group_names、when、copy content</td></tr><tr><td>14</td><td>Web 内容目录</td><td>03</td><td>file 权限/SGID/软链、httpd/firewalld、SELinux context</td></tr><tr><td>15</td><td>硬件报告</td><td>05 / 09</td><td>facts、default、replace/模板思维</td></tr><tr><td>16</td><td>创建 Vault</td><td>11</td><td>encrypt、view、password file</td></tr><tr><td>17</td><td>批量创建用户</td><td>05 / 06 / 07 / 09 / 11</td><td>vars_files、Vault、loop、when、password_hash</td></tr><tr><td>18</td><td>更新 Vault 密钥</td><td>11</td><td>rekey</td></tr><tr><td>19</td><td>计划任务</td><td>03</td><td>cron、用户、验证</td></tr></table></div><div class="exam-box"><b>真正的过考标准：</b>不是“我看答案觉得都懂”，而是受管节点恢复到初始状态以后，你能只拿题目和现场帮助信息重新写出项目文件，并让 Playbook 再次把机器构造成要求的状态。你上传的模拟题说明本身就强调评分前会重置受管节点、重新应用控制节点项目内容，因此“可重放”比“当前看起来对”重要得多。</div></section>
+<section id="manual" class="chapter searchable"><div class="chapter-head"><div class="chapter-no">MX</div><div><h2>考场查手册：你不需要记住所有 YAML</h2><p>这一节专门回答你前面最担心的问题：到底要把题目理解到什么程度，才可以安心靠现场手册写出来。</p></div></div>
+<div class="lecture"><p>一道题读完以后，只要你能回答下面五件事，就已经可以开始查文档，不需要在脑子里凭空生成完整 YAML：<strong>目标 hosts 是谁；系统对象是什么；最终状态是什么；是否存在循环/条件/失败分支；最后怎么验证。</strong></p>
+<table><tr><th>你已经识别到</th><th>现场参考入口</th><th>你要查什么</th></tr><tr><td>知道模块名</td><td><code>ansible-doc -s MODULE</code></td><td>最短参数骨架</td></tr><tr><td>只知道功能，不确定模块名</td><td><code>ansible-doc -l | grep -i KEYWORD</code></td><td>候选模块</td></tr><tr><td>需要系统信息</td><td><code>ansible HOST -m setup</code></td><td>Facts 名称与数据结构</td></tr><tr><td>System Role</td><td>角色目录里的 <code>README.md</code></td><td>变量结构与最小示例</td></tr><tr><td>Galaxy/Collection</td><td><code>ansible-galaxy ... --help</code></td><td>安装、路径、requirements 语法</td></tr><tr><td>Vault</td><td><code>ansible-vault --help</code></td><td>encrypt/view/edit/rekey</td></tr><tr><td>配置项忘了</td><td><code>ansible-config list</code> / <code>init</code></td><td>正确配置键与默认值</td></tr></table>
+<div class="model"><div class="model-title">成熟的做题路径</div><div class="flow"><span>题目</span><b>→</b><span>Ansible 设计图</span><b>→</b><span>查手册补参数</span><b>→</b><span>Playbook</span><b>→</b><span>syntax-check / run</span><b>→</b><span>Linux 命令验收</span></div></div>
+<p>所以你真正应该记的是“模块索引”和结构，不是整份答案。做题做到后面，一些高频参数自然会记住，但那是练习的副产品，不是学习目标。</p></div></section>
+<footer>内容基础：用户上传的《RHCE课程笔记》13 份 PDF + 本对话中的 RHCE 9 模拟题材料。正文中的“精确一点 / 深入理解 / 考试连接”属于在原讲义基础上的补充说明；每章末尾保留原始随堂讲义完整文本以便核对。</footer>
+</div></main></div>
+<script>
+const key='rhce-expanded-progress-v1';
+const state=JSON.parse(localStorage.getItem(key)||'{}');
+function updateProgress(){const boxes=[...document.querySelectorAll('[data-progress]')];const n=boxes.filter(x=>x.checked).length;document.getElementById('progressText').textContent=`已学 ${n} / ${boxes.length}`;localStorage.setItem(key,JSON.stringify(Object.fromEntries(boxes.map(x=>[x.dataset.progress,x.checked]))));}
+document.querySelectorAll('[data-progress]').forEach(x=>{x.checked=!!state[x.dataset.progress];x.addEventListener('change',updateProgress)});updateProgress();
+document.getElementById('resetProgress').onclick=()=>{if(confirm('清空 13 章学习进度？')){document.querySelectorAll('[data-progress]').forEach(x=>x.checked=false);updateProgress()}};
+document.getElementById('sourceToggle').onclick=()=>document.body.classList.toggle('dim-source');
+document.getElementById('search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.searchable').forEach(s=>{s.classList.toggle('hidden',q && !s.innerText.toLowerCase().includes(q))})});
+document.querySelectorAll('pre').forEach(pre=>{const b=document.createElement('button');b.textContent='复制';b.style='float:right;margin:-5px -5px 6px 10px;border:0;border-radius:5px;padding:4px 7px;background:#37403b;color:#dfe5e1;font-size:10px;cursor:pointer';b.onclick=async()=>{await navigator.clipboard.writeText(pre.innerText.replace(/^复制
+?/,''));b.textContent='已复制';setTimeout(()=>b.textContent='复制',800)};pre.prepend(b)});
+</script></body></html>

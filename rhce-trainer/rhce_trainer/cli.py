@@ -1,0 +1,70 @@
+import argparse,json,sys,subprocess
+from .model import QUESTIONS,question
+from .engine import Engine
+from .transport import VMS,NODES
+from .grading import Grading
+from . import state
+
+def main():
+ p=argparse.ArgumentParser(prog='rhce',description='RHCE 9 逐题练习与基线重放评分')
+ sub=p.add_subparsers(dest='command',required=True)
+ sub.add_parser('list');sub.add_parser('status');sub.add_parser('doctor');sub.add_parser('connect')
+ sub.add_parser('init',help='首次从原始镜像建立五个受管节点的命名基线')
+ for name in ('show','reset','grade','plan'):
+  s=sub.add_parser(name);s.add_argument('number',type=int,choices=range(1,20))
+  if name=='grade':
+   s.add_argument('--verbose',action='store_true');s.add_argument('--hint',action='store_true');s.add_argument('--json',action='store_true');s.add_argument('--profile',choices=['pdf','live'],default='pdf')
+  if name=='reset':s.add_argument('--dry-run',action='store_true')
+ s=sub.add_parser('recover');s.add_argument('journal')
+ s=sub.add_parser('restore-lab',help='将五个受管节点恢复到命名基线，不重建 workstation');s.add_argument('--dry-run',action='store_true')
+ a=p.parse_args()
+ try:
+  if a.command=='list':
+   for q in QUESTIONS:print(f"{q['id']:2}  {q['title']}")
+   return
+  if a.command=='show':
+   q=question(a.number);print(f"第{q['id']}题 {q['title']}\n\n{q['question']}\n\n工作目录：{q['base']}\n提交：{', '.join(q['artifacts'])}\n前置题：{q['dependencies']}");return
+  if a.command=='plan' or (a.command=='reset' and a.dry_run):
+   print(json.dumps(question(a.number),ensure_ascii=False,indent=2));return
+  e=Engine()
+  if a.command=='connect':
+   cmd=[x for x in e.t.base];i=cmd.index('BatchMode=yes');cmd[i]='BatchMode=no'
+   subprocess.run(cmd+['true'],check=True);print('SSH 已连接，密码未保存。');return
+  if a.command=='doctor':
+   identity=e.identity();print('入口身份与 VM 清单：正常')
+   for h in VMS:
+    r=e.t.ws('hostname') if h=='workstation' else e.t.node(h,'hostname')
+    print(('PASS' if r.rc==0 else 'FAIL')+' '+h+' '+r.out.strip())
+   print(e.t.dev('ansible --version').require());print('基线：'+str(state.load('baseline.json')));return
+  if a.command=='status':
+   print(json.dumps({'current':state.load('current.json'),'baseline':state.load('baseline.json'),'journals':[{'id':x.stem,'phase':json.loads(x.read_text()).get('phase')} for x in sorted((state.STATE/'journals').glob('*.json'))]},ensure_ascii=False,indent=2));return
+  with state.locked():
+   if a.command=='init':e.init();print('命名基线已创建。')
+   elif a.command=='reset':e.reset(question(a.number))
+   elif a.command=='recover':
+    if '/' in a.journal or '..' in a.journal:raise ValueError('恢复点名称无效')
+    j=state.load('journals/'+a.journal+'.json')
+    if not j:raise ValueError('找不到恢复点')
+    if j.get('runner'):
+     cleanup=Grading(e,question(j['question']));cleanup.run_directory=j['runner'];cleanup.stop_runner()
+    e.restore_scene(j)
+   elif a.command=='restore-lab':
+    if a.dry_run:print('将备份现场并恢复：'+', '.join(NODES));return
+    j=e.save_scene(list(NODES),'restore');e.baseline(list(NODES));print('五个受管节点已恢复；控制节点答案保留。恢复点：'+j['id'])
+   elif a.command=='grade':
+    r=Grading(e,question(a.number),a.profile).grade()
+    path='reports/'+state.stamp()+f'-q{a.number}.json';state.save(path,r)
+    if a.json:print(json.dumps(r,ensure_ascii=False,indent=2))
+    else:
+     print(f"\n第{r['question']}题 {r['title']}")
+     for c in r['checkpoints']:
+      print(f"[{c['status']}] {c['description']} ({c['weight']}分)")
+      if a.verbose or not c['passed']:print('  '+json.dumps(c['evidence'],ensure_ascii=False))
+     print(f"\n得分：{r['score']}/100\n报告：{state.STATE/path}")
+     if a.hint:print('提示：根据失败项的实际结果检查 play 的目标组、依赖、模块参数及运行错误；不要求与参考 YAML 相同。')
+    if r['score']<100:sys.exit(1)
+ except (RuntimeError,ValueError,OSError,subprocess.SubprocessError) as exc:
+  print('ERROR：'+str(exc),file=sys.stderr);sys.exit(2)
+ except KeyboardInterrupt:
+  print('操作中断。请查看 rhce status；必要时运行 rhce recover <恢复点>。',file=sys.stderr);sys.exit(130)
+if __name__=='__main__':main()

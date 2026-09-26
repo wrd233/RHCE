@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+from rhce_trainer.cli import main
+main()

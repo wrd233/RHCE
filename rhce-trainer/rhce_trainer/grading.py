@@ -3,12 +3,12 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from .model import checkpoint,report,ROOT
 from .engine import BASE
-from .transport import NODES
+from .transport import NODES,NODE_ADDRESSES
 from . import state
 
 class Grading:
     def __init__(self,e,q,profile='pdf'):
-        self.e=e;self.t=e.t;self.q=q;self.profile=profile;self.checks=[];self.events=[];self.obs={};self.run_ok=False;self.run_result=None;self.run_directory=None
+        self.e=e;self.t=e.t;self.q=q;self.profile=profile;self.checks=[];self.events=[];self.obs={};self.run_ok=False;self.run_result=None;self.run_directory=None;self.replay_verified=False
     def add(self,id,desc,weight,ok,evidence,check):
         self.checks.append(checkpoint(id,desc,weight,ok,evidence,check))
     def command(self,cmd):return self.t.dev(cmd)
@@ -28,7 +28,7 @@ print(json.dumps(out))'''
     def safety_inventory(self):
         inv=json.loads(self.command('ansible-inventory --list').require())
         hv=inv.get('_meta',{}).get('hostvars',{})
-        allowed={h:'172.25.250.'+str(i) for h,i in zip(NODES,[10,11,12,13,254])}
+        allowed=NODE_ADDRESSES
         allhosts=set(hv)
         for group,v in inv.items():
             if group!='_meta':allhosts.update(v.get('hosts',[]))
@@ -37,6 +37,11 @@ print(json.dumps(out))'''
             if v.get('ansible_host',h) not in (h,h+'.lab.example.com',allowed[h]):raise RuntimeError('清单将主机映射到范围外地址：'+h)
             if str(v.get('ansible_port',22))!='22' or v.get('ansible_connection','ssh') not in ('ssh','smart'):raise RuntimeError('拒绝非实验 SSH 连接')
             if any(v.get(k) for k in ('ansible_ssh_common_args','ansible_ssh_extra_args','ansible_ssh_executable')):raise RuntimeError('评分不接受清单自定义 SSH 代理或可执行程序')
+        for h in allhosts:
+            address=hv.get(h,{}).get('ansible_host',h)
+            resolved=self.t.ws('getent ahostsv4 '+shlex.quote(address))
+            ips={line.split()[0] for line in resolved.out.splitlines() if line.split()}
+            if resolved.rc or ips!={allowed[h]}:raise RuntimeError('名称解析超出练习地址范围：'+h+' '+str(sorted(ips)))
         return inv
     def execute(self,journal=None):
         self.safety_inventory()
@@ -70,11 +75,15 @@ print(json.dumps(out))'''
     def out(self,h,key):return self.obs[h]['commands'][key]['out']
     def file(self,h,p):return self.obs[h]['files'][p]
     def state_check(self,id,desc,weight,predicate,evidence,check):
-        self.add(id,desc,weight,self.run_ok and predicate,evidence,check)
+        # A failed host must not erase successful checkpoints on other hosts.
+        # Partial credit is possible only after a verified baseline and real task events.
+        replay=self.run_ok or (self.replay_verified and any(e.get('status')=='ok' for e in self.events))
+        self.add(id,desc,weight,replay and predicate,evidence,check)
     def grade(self):
         artifacts=self.artifacts()
         self.add('artifacts','题目要求的文件/目录存在且属于 devops',10,all(x.get('exists') and x.get('owner')=='devops' for x in artifacts),artifacts,'stat required artifacts')
         if not self.q['playbook']:
+            self.e.preflight(self.q)
             from .graders import controller
             controller(self)
             return report(self.q,self.checks,mode='controller-verification',profile=self.profile)
@@ -84,11 +93,14 @@ print(json.dumps(out))'''
             return report(self.q,self.checks,mode='missing-artifacts',profile=self.profile)
         # Validate the inventory before any VM mutation.
         self.safety_inventory()
+        self.e.preflight(self.q)
         j=self.e.save_scene(self.q.get('execution_nodes',self.q['nodes']),'grade',self.q['id'])
         try:
             j['phase']='grading';state.save('journals/'+j['id']+'.json',j)
             self.e.baseline(self.q.get('execution_nodes',self.q['nodes']));self.e.prepare(self.q,grading=True)
+            self.replay_verified=True
             execution=self.execute(j)
+            if not self.run_ok:self.e.preflight(self.q)
             self.add('execution','以 devops 从正确基线执行成功',20,self.run_ok,{'returncode':self.run_result.rc,'failed_tasks':[x for x in self.events if x['status'] in ('failed','unreachable')]},'ansible-playbook '+self.q['playbook'])
             self.observe()
             from .graders import managed

@@ -95,13 +95,35 @@ class Engine:
             if not tar.getmembers():raise RuntimeError('答案备份为空')
         dest=state.STATE/'backups'/(state.stamp()+'.tar.gz');dest.write_bytes(p.stdout);dest.chmod(0o600)
         return str(dest)
-    def save_scene(self,nodes,kind,qid=None):
+    def restore_answers(self, backup):
+        """Stage a verified archive before swapping; retain the displaced files."""
+        tag=state.stamp()
+        staging='/home/devops/.rhce-restore-'+tag
+        retired='/home/devops/.rhce-trainer-retired/restore-'+tag
+        if backup:
+            data=Path(backup).read_bytes()
+            with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive:
+                for member in archive.getmembers():
+                    path=Path(member.name)
+                    if path.is_absolute() or '..' in path.parts or not path.parts or path.parts[0]!='ansible':
+                        raise RuntimeError('答案归档包含越界路径，未覆盖任何文件')
+            self.t.ws('install -d -m 700 '+staging+' && tar -xzf - -C '+staging,data).require()
+            self.t.ws('test -d '+staging+'/ansible').require()
+        else:
+            self.t.ws('install -d -m 700 '+staging).require()
+        command='set -e; mkdir -p '+retired+'; if test -e '+BASE+'; then mv '+BASE+' '+retired+'/ansible; fi; '
+        if backup:
+            command+='if ! mv '+staging+'/ansible '+BASE+'; then test ! -e '+retired+'/ansible || mv '+retired+'/ansible '+BASE+'; exit 1; fi; '
+        command+='rmdir '+staging
+        self.t.ws(command).require()
+        return retired
+    def save_scene(self,nodes,kind,qid=None,keep_running=False):
         self.guard(nodes)
         tag='rhce-'+kind+'-'+state.stamp()
         journal=dict(id=tag,kind=kind,question=qid,nodes=nodes,saved=[],restored=[],phase='saving',backup=self.backup())
         state.save('journals/'+tag+'.json',journal)
         with ThreadPoolExecutor(max_workers=5) as pool:
-            jobs={pool.submit(self.vm,'save',h,tag,False):h for h in nodes}
+            jobs={pool.submit(self.vm,'save',h,tag,keep_running):h for h in nodes}
             errors=[]
             for job in as_completed(jobs):
                 h=jobs[job]
@@ -119,7 +141,7 @@ class Engine:
         journal['phase']='ready';state.save('journals/'+tag+'.json',journal)
         return journal
     def restore_scene(self,j):
-        self.guard(j['nodes'],require_space=False)
+        if j['nodes']:self.guard(j['nodes'],require_space=False)
         j['phase']='restoring';state.save('journals/'+j['id']+'.json',j)
         failures=[]
         with ThreadPoolExecutor(max_workers=5) as pool:
@@ -148,6 +170,32 @@ class Engine:
         self.t.put(BASE+'/inventory',INVENTORY)
         self.t.put(BASE+'/ansible.cfg',CFG)
         self.t.ws('install -d -o devops -g devops '+BASE+'/roles '+BASE+'/mycollections').require()
+    def preflight(self,q):
+        """Check external dependencies before stopping a VM or moving an answer."""
+        from .model import dependency_order
+        needed=set(dependency_order(q['id']))|{q['id']}
+        urls=[]
+        if 2 in needed:
+            urls += ['http://content.example.com/rhel9.0/x86_64/dvd/'+part for part in ('BaseOS/repodata/repomd.xml','AppStream/repodata/repomd.xml','RPM-GPG-KEY-redhat-release')]
+        if 6 in needed:urls += ['http://classroom.example.com/content/'+x+'.tar.gz' for x in ('haproxy','phpinfo')]
+        if 7 in needed:urls += ['http://content.example.com/'+x+'.tar.gz' for x in ('ansible-posix-1.5.1','community-general-6.3.0')]
+        for n,file in ((15,'hwreport.empty'),(17,'user_list.yml'),(18,'salaries.yml')):
+            if n in needed:urls.append('http://172.25.254.254/content/'+file)
+        if needed & {16,17,18}:
+            from .secrets import secrets
+            secrets(self.config)
+        if not urls:return []
+        script='''import urllib.request,json,sys
+out=[]
+for url in json.load(sys.stdin):
+ try:
+  with urllib.request.urlopen(urllib.request.Request(url,method='HEAD'),timeout=10) as r:out.append(dict(url=url,status=r.status))
+ except Exception as exc:out.append(dict(url=url,status=0,error=str(exc)))
+print(json.dumps(out))'''
+        rows=json.loads(self.t.ws('python3 -c '+shlex.quote(script),json.dumps(urls).encode()).require())
+        failed=[r for r in rows if r['status']!=200]
+        if failed:raise RuntimeError('资源前置检查失败：'+json.dumps(failed,ensure_ascii=False))
+        return rows
     def repos(self,nodes):
         repo=''
         for name,label,folder in [('rh294_BASE','base','BaseOS'),('rh294_STREAM','stream','AppStream')]:
@@ -210,20 +258,44 @@ vgs --noheadings --units m -o vg_name,vg_free research
             if rel.startswith('/') or '..' in Path(rel).parts:raise ValueError('危险题库路径')
             src=BASE+'/'+rel;dst='/home/devops/.rhce-trainer-retired/'+tag+'/'+rel
             self.t.ws('if test -e '+shlex.quote(src)+'; then mkdir -p '+shlex.quote(str(Path(dst).parent))+'; mv -- '+shlex.quote(src)+' '+shlex.quote(dst)+'; fi').require()
+    def verify_ready(self,q):
+        code='import json,sys,os; print(json.dumps([p for p in json.load(sys.stdin) if os.path.lexists("/home/devops/ansible/"+p)]))'
+        remaining=json.loads(self.t.ws('python3 -c '+shlex.quote(code),json.dumps(q['artifacts']).encode()).require())
+        if remaining:raise RuntimeError('重置后仍有本题产物：'+', '.join(remaining))
+        for h in q['nodes']:
+            self.t.ws('sudo -u devops -H '+shlex.join(INNER+['devops@'+h,'sudo -n true'])).require()
+        if q['id']==10:
+            for h in q['nodes']:
+                rows=self.t.node(h,'vgs --noheadings --units b --nosuffix -o vg_name,vg_free').require().splitlines()
+                groups={row.split()[0]:float(row.split()[1]) for row in rows if len(row.split())==2}
+                free=groups.get('research',0)
+                valid=(free>=600*1024**2 if h in ('servera','serverb') else 400*1024**2<=free<600*1024**2 if h in ('serverc','serverd') else 'research' not in groups)
+                if not valid or self.t.node(h,'lvs research/data').rc==0:
+                    raise RuntimeError(h+' 的 LVM 前置条件不正确')
     def reset(self,q):
+        self.preflight(q)
         backup=self.backup()
         j=self.save_scene(q['nodes'],'reset',q['id']) if q['nodes'] else None
+        if j is None:
+            j=dict(id='rhce-reset-'+state.stamp(),kind='reset',question=q['id'],nodes=[],saved=[],restored=[],backup=backup,phase='ready')
+        j['backup']=backup
         try:
-            if j:
-                j['phase']='preparing';state.save('journals/'+j['id']+'.json',j)
-                self.baseline(q['nodes'])
-            self.clear_artifacts(q);self.prepare(q)
+            j['phase']='preparing';state.save('journals/'+j['id']+'.json',j)
+            if q['nodes']:self.baseline(q['nodes'])
+            self.clear_artifacts(q);self.prepare(q);self.verify_ready(q)
         except BaseException:
-            if j:self.restore_scene(j)
+            failures=[]
+            try:self.restore_scene(j)
+            except BaseException as exc:failures.append('虚拟机恢复：'+str(exc))
+            try:
+                self.restore_answers(backup);j['controller_restored']=True
+            except BaseException as exc:failures.append('答案恢复：'+str(exc))
+            j['phase']='recovery_required' if failures else 'recovered'
+            state.save('journals/'+j['id']+'.json',j)
+            if failures:raise RuntimeError('重置失败且恢复未完成；恢复点 '+j['id']+'；'+'; '.join(failures))
             raise
-        if j:
-            j['phase']='prepared';state.save('journals/'+j['id']+'.json',j)
-        state.save('current.json',dict(question=q['id'],backup=backup,journal=j['id'] if j else None,time=time.time()))
+        j['phase']='prepared';state.save('journals/'+j['id']+'.json',j)
+        state.save('current.json',dict(question=q['id'],backup=backup,journal=j['id'],time=time.time()))
         print('第 '+str(q['id'])+' 题已准备；目标题产物未写入。备份：'+str(backup))
     def restore_lab(self):
         j=self.save_scene(list(NODES),'restore')

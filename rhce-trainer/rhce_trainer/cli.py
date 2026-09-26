@@ -16,7 +16,7 @@ def main():
   if name=='grade':
    s.add_argument('--verbose',action='store_true');s.add_argument('--hint',action='store_true');s.add_argument('--json',action='store_true');s.add_argument('--profile',choices=['pdf','live'],default='pdf')
   if name=='reset':s.add_argument('--dry-run',action='store_true')
- s=sub.add_parser('recover');s.add_argument('journal')
+ s=sub.add_parser('recover');s.add_argument('journal');s.add_argument('--with-answers',action='store_true',help='同时恢复归档答案；当前答案保留到 retired 目录')
  s=sub.add_parser('restore-lab',help='将五个受管节点恢复到命名基线，不重建 workstation');s.add_argument('--dry-run',action='store_true')
  a=p.parse_args()
  try:
@@ -29,8 +29,7 @@ def main():
    print(json.dumps(plan(a.number),ensure_ascii=False,indent=2));return
   e=Engine()
   if a.command=='connect':
-   cmd=[x for x in e.t.base];i=cmd.index('BatchMode=yes');cmd[i]='BatchMode=no'
-   subprocess.run(cmd+['true'],check=True);print('SSH 已连接，密码未保存。');return
+   e.t.connect();print('SSH 已连接，密码未保存。');return
   if a.command=='doctor':
    identity=e.identity();print('入口身份与 VM 清单：正常')
    failed=[]
@@ -63,6 +62,8 @@ def main():
     if j.get('runner'):
      cleanup=Grading(e,question(j['question']));cleanup.run_directory=j['runner'];cleanup.stop_runner()
     e.restore_scene(j)
+    if a.with_answers:
+     e.restore_answers(j.get('backup'));j['controller_restored']=True;state.save('journals/'+j['id']+'.json',j)
    elif a.command=='restore-lab':
     j=e.restore_lab();print('五个受管节点已恢复；控制节点答案保留。恢复点：'+j['id'])
    elif a.command=='grade':

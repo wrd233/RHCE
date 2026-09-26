@@ -64,7 +64,7 @@ def repos(g):
         for name,word,folder in [('rh294_BASE','base','BaseOS'),('rh294_STREAM','stream','AppStream')]:
             matches=[r for r in found if r.get('id')==name]
             good=any(r.get('name')=='rh294 '+word+' software' and r.get('baseurl','').rstrip('/')=='http://content.example.com/rhel9.0/x86_64/dvd/'+folder and r.get('enabled','1').lower() in ('1','yes','true') and r.get('gpgcheck','0').lower() in ('1','yes','true') and r.get('gpgkey')=='http://content.example.com/rhel9.0/x86_64/dvd/RPM-GPG-KEY-redhat-release' for r in matches)
-            ok=ok and good
+            ok=ok and len(matches)==1 and good
         g.state_check(h+'.repos',h+' 两个存储库的全部要求',14,ok,found,'parse every /etc/yum.repos.d/*.repo')
 MANAGED[2]=repos
 
@@ -95,7 +95,7 @@ def selinux(g):
     g.state_check('role','所有节点实际使用 SELinux 系统角色',15,all(g.has_event(role='selinux',host=h) for h in NODES),sorted({e['role'] for e in g.events if e['role']}),'Ansible role events')
     for h in NODES:
         conf=(g.file(h,'/etc/selinux/config').get('text') or '')
-        ok=g.out(h,'selinux')=='Enforcing' and bool(re.search(r'^SELINUX=enforcing\s*$',conf,re.M))
+        ok=g.out(h,'selinux')=='Enforcing' and bool(re.search(r'''^\s*SELINUX\s*=\s*["']?enforcing["']?\s*(?:#.*)?$''',conf,re.M))
         g.state_check(h+'.enforcing',h+' 运行中及持久状态 enforcing',10,ok,{'runtime':g.out(h,'selinux'),'config':conf},'getenforce + /etc/selinux/config')
 MANAGED[5]=selinux
 
@@ -132,7 +132,8 @@ MANAGED[12]=hosts
 def webcontent(g):
     d=g.file('servera','/webdev');link=g.file('servera','/var/www/html/webdev');page=g.file('servera','/webdev/index.html')
     g.state_check('directory','/webdev 目录组 devops、权限 2775',20,d.get('kind')=='directory' and d.get('group')=='devops' and d.get('mode')=='0o2775',d,'lstat + group lookup')
-    g.state_check('symlink','Web 路径符号链接到 /webdev',15,link.get('link')=='/webdev',link,'readlink /var/www/html/webdev')
+    resolved=g.t.node('servera','readlink -f /var/www/html/webdev')
+    g.state_check('symlink','Web 路径符号链接到 /webdev',15,link.get('link') is not None and resolved.out.strip()=='/webdev',link,'readlink -f /var/www/html/webdev (absolute or relative link)')
     g.state_check('content','index.html 为单行 Development',15,page.get('text') in ('Development','Development\n'),page,'read /webdev/index.html')
     r=g.t.ws('curl -fsS --max-time 10 http://servera/webdev/')
     g.state_check('http','从控制节点通过 HTTP 访问目录',20,r.rc==0 and r.out.strip()=='Development',{'rc':r.rc,'actual':r.out},'curl workstation -> servera/webdev/')
@@ -326,7 +327,7 @@ def dec(data,key):return VaultLib([('default',VaultSecret(key.encode()))]).decry
 try:current=dec(raw,p['new']);out['new_key']=True
 except Exception:current=None;out['new_key']=False
 try:dec(raw,p['old']);out['old_rejected']=False
-except Exception:out['old_rejected']=True
+except Exception:out['old_rejected']=out['new_key']
 try:original=urllib.request.urlopen('http://172.25.254.254/content/salaries.yml',timeout=15).read();plain=dec(original,p['old']);out['content_unchanged']=current==plain
 except Exception:out['source_error']=True;out['content_unchanged']=False
 print(json.dumps(out))'''

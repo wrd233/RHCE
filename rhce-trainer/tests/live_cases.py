@@ -39,7 +39,8 @@ p=json.load(sys.stdin); raw=urllib.request.urlopen('http://172.25.254.254/conten
  if n==4:data=[dict(hosts='all',roles=['rhel-system-roles.timesync'],vars=dict(timesync_ntp_servers=[dict(hostname='classroom.example.com',iburst=True)]))]
  if n==5:data=[dict(hosts='all',roles=['rhel-system-roles.selinux'],vars=dict(selinux_state='enforcing',selinux_policy='targeted'))]
  if n==8:
-  write(e,'roles/apache/tasks/main.yml',[task('ansible.builtin.dnf',dict(name=['httpd','firewalld'],state='present')),task('ansible.builtin.service',dict(name='{{ item }}',enabled=True,state='started'),loop=['httpd','firewalld']),task('ansible.posix.firewalld',dict(service='http',permanent=True,immediate=True,state='enabled')),task('ansible.builtin.template',dict(src='index.html.j2',dest='/var/www/html/index.html'))])
+  write(e,'roles/apache/defaults/main.yml',dict(apache_index='index.html.j2',apache_target='/var/www/html/index.html'))
+  write(e,'roles/apache/tasks/main.yml',[task('ansible.builtin.dnf',dict(name=['httpd','firewalld'],state='present')),task('ansible.builtin.service',dict(name='{{ item }}',enabled=True,state='started'),loop=['httpd','firewalld']),task('ansible.posix.firewalld',dict(service='http',permanent=True,immediate=True,state='enabled')),task('ansible.builtin.template',dict(src='{{ apache_index }}',dest='{{ apache_target }}'))])
   write(e,'roles/apache/templates/index.html.j2','Welcome to {{ ansible_fqdn }} on {{ ansible_default_ipv4.address }}\n')
   data=[dict(hosts='webservers',roles=['apache'])]
  if n==9:
@@ -96,6 +97,9 @@ def run(numbers,e=None,negative=False):
     state.save('reports/live-q'+str(n)+'-noop.json',bad)
     print('LIVE NOOP',n,bad['score'],flush=True)
     if bad['score']==100:raise RuntimeError('空 playbook 被误判满分：第 '+str(n)+' 题')
+    critical={2:['servera.repos'],3:['servera.packages'],4:['role'],5:['servera.enforcing'],8:['serverc.httpd','serverd.page'],9:['balance'],10:['servera.volume'],11:['filesystem','mount'],12:['servera.host'],13:['servera.issue','serverb.issue','serverc.issue','serverd.issue'],14:['http'],15:['servera.hardware'],17:['servera.users'],19:['command','schedule']}
+    for c in bad['checkpoints']:
+     if c['id'] in critical.get(n,[]) and c['passed']:raise RuntimeError('旧状态错误获得 checkpoint 分数：'+c['id'])
     fixture(e,n)
   except Exception as exc:
    print('LIVE ERROR',n,str(exc),flush=True)
@@ -112,7 +116,9 @@ if __name__=='__main__':
   from rhce_trainer.transport import NODES
   e=Engine()
   with e.t.lease():
-   j=e.save_scene(list(NODES),'acceptance')
+   # bastion also routes traffic to classroom/content: outer protection must restart it.
+   j=e.save_scene(list(NODES),'acceptance',keep_running=True)
+   j['previous_current']=state.load('current.json');state.save('journals/'+j['id']+'.json',j)
    try:run(args.numbers,e,args.negative)
    finally:
    # The tests' reset routines overwrite controller artifacts. Preserve those separately,
@@ -122,7 +128,6 @@ if __name__=='__main__':
      j['phase']='recovery_required';state.save('journals/'+j['id']+'.json',j)
      raise RuntimeError('先恢复未完成评分，再恢复验收现场：'+j['id'])
     e.restore_scene(j)
-    if j['backup']:
-     target='/home/devops/.rhce-trainer-retired/acceptance-'+j['id']
-     e.t.ws('mkdir -p '+shlex.quote(target)+'; mv '+BASE+' '+shlex.quote(target+'/ansible')+' && tar -C /home/devops -xzf -',Path(j['backup']).read_bytes()).require()
-     j['controller_restored']=True;state.save('journals/'+j['id']+'.json',j)
+    e.restore_answers(j.get('backup'))
+    j['controller_restored']=True;state.save('journals/'+j['id']+'.json',j)
+    state.save('current.json',j['previous_current'])

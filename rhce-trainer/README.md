@@ -7,7 +7,7 @@
 需要 Python 3.9+、系统 OpenSSH。无需第三方 Python 库即可执行多数命令；16/17/18 的敏感题面值需 `pdfplumber`，会自动使用本机 Codex 附带的 Python（也可在自己的 Python 安装该库）。
 
 ```sh
-cd /Users/mac/Downloads/work/RHCE/RHCE/rhce-trainer
+cd /Users/wangrundong/work/红帽RHCE/rhce-trainer
 ./rhce list
 ./rhce connect
 ```
@@ -17,7 +17,7 @@ cd /Users/mac/Downloads/work/RHCE/RHCE/rhce-trainer
 连接及 PDF 路径可保存到 `~/.local/state/rhce-trainer/connection.json`，只支持非秘密信息，例如：
 
 ```json
-{"host":"rhce.lab0.cn","port":9007,"user":"root","pdf":"/Users/mac/Downloads/work/RHCE/RHCE/RHCE9.0模拟题新版(答案)(1).pdf"}
+{"host":"rhce.lab0.cn","port":9007,"user":"root","pdf":"/Users/wangrundong/Downloads/RHCE9.0模拟题新版(答案).pdf"}
 ```
 
 直接从源码运行时会自动寻找项目旁的 RHCE9.0 PDF；安装为独立包后，应在 connection.json 指定 PDF 路径。
@@ -55,6 +55,7 @@ rhce doctor
 rhce restore-lab --dry-run
 rhce restore-lab
 rhce recover <status 中的恢复点名称>
+rhce recover <status 中的恢复点名称> --with-answers
 ```
 
 `restore-lab` 完全恢复五个受管练习节点至工具基线，控制节点答案保留。它不等同于 `fullreset all`：工具故意不提供会删除全部保存点、可能影响 utility 的宽泛命令。若真正需要重新下载损坏的 VM 主镜像，必须先导出保存点并在维护窗口单独处理，本工具不会自动这么做。
@@ -68,7 +69,7 @@ rhce doctor
 
 上面的名称是本次环境实际发现的保存点，不能照搬到其他环境。接管只读取身份和每台 VM 的全部磁盘保存点，再写本地绑定；不会重置 VM，也不等于重新验证保存点内容。已有本地基线时拒绝覆盖。
 
-`recover` 恢复该操作保存的 VM 现场。控制节点答案归档在 `~/.local/state/rhce-trainer/backups`，不随 recover 自动覆盖，避免覆盖你后来继续写的答案。可先把 tar.gz 解压到本地临时目录查看，按需单文件还原。
+`recover` 恢复该操作保存的 VM 现场。控制节点答案归档在 `~/.local/state/rhce-trainer/backups`，默认不随 recover 覆盖；显式加入 `--with-answers` 可一并恢复答案，当前文件会移到 retired 目录保留。reset 自身失败时自动回滚本次答案修改。可先把 tar.gz 解压到本地临时目录查看，按需单文件还原。
 
 ## 评分原则
 
@@ -82,7 +83,7 @@ rhce doctor
 
 因此手工 SSH 改对状态、空 playbook、只留下上次成功结果不能替代可重放的答案。角色和模板既检查产物也检查实际执行事件；不要求 YAML 与参考答案逐字相同。控制节点题直接验证有效配置、Galaxy 空目录安装、集合文件完整性、Vault 解密/内容保持。
 
-每个检查点含 id、描述、权重、检查方式、PASS/FAIL 和证据。总分 100。基础设施无法恢复、依赖无法建立、无法采集时报告 ERROR，不冒充学生答案得分。退出码：0=满分/命令成功，1=未满分，2=环境/工具错误，130=中断。JSON 报告在 `~/.local/state/rhce-trainer/reports`。
+每个检查点含 id、描述、权重、检查方式、PASS/FAIL 和证据。已完成可靠基线重放后，即使某台主机执行失败，其他已满足要求的分项仍可得分；运行失败独立扣除执行分。总分 100。基础设施无法恢复、依赖无法建立、无法采集时报告 ERROR，不冒充学生答案得分。退出码：0=满分/命令成功，1=未满分，2=环境/工具错误，130=中断。JSON 报告在 `~/.local/state/rhce-trainer/reports`。
 
 ## 题面冲突及覆盖边界
 
@@ -97,6 +98,8 @@ rhce doctor
 ## 安全与维护
 
 f0 仅执行只读探测及官方 VM 管理命令，不安装程序或修改物理网络、SSH、服务。utility/classroom 不在可重置白名单。保存点只使用显式名称，绝不使用可能恢复到“最新用户快照”的裸 reset 进行日常练习。VM 身份或官方脚本摘要发生变化时停止。保存和恢复时会在 VM 停止状态下逐磁盘比较保存点与当前镜像，防止官方脚本未传播复制错误而误报成功。
+
+reset 在修改前检查下载资源及密码题所需的 PDF；资源不可达时停止，不先清除答案。重置完成后独立检查本题文件缺失、SSH 提权可用和关键磁盘前置条件。
 
 本地操作锁与 workstation 上的跨电脑操作锁共同防止新版工具并发重置。该锁不会阻止旧版工具或手工操作，因此现场验收仍需确认没有其他使用者。锁断开会停止后续远程操作；重置或全环境恢复失败会尝试恢复已保存的 VM 现场。控制节点文件仍通过备份单独恢复。若无法确认学生运行进程已停止，则保留 recovery_required，避免活跃进程继续污染恢复后的 VM。
 

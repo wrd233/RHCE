@@ -79,10 +79,11 @@ class Tests(unittest.TestCase):
   self.assertIn('vdb.ovl-safe',e.t.run.call_args[0][0])
  def test_reset_failure_restores_scene(self):
   with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)):
-   e=Engine();e.backup=Mock(return_value='archive');j={'id':'safe'}
+   e=Engine();e.preflight=Mock();e.restore_answers=Mock();e.backup=Mock(return_value='archive');j={'id':'safe'}
    e.save_scene=Mock(return_value=j);e.baseline=Mock();e.clear_artifacts=Mock();e.prepare=Mock(side_effect=RuntimeError('prepare failed'));e.restore_scene=Mock()
    with self.assertRaises(RuntimeError):e.reset(question(13))
    e.restore_scene.assert_called_once_with(j)
+   e.restore_answers.assert_called_once_with('archive')
    self.assertIsNone(state.load('current.json'))
  def test_restore_lab_failure_rolls_back(self):
   e=Engine();j={'id':'safe'};e.save_scene=Mock(return_value=j);e.baseline=Mock(side_effect=RuntimeError('restore failed'));e.restore_scene=Mock()

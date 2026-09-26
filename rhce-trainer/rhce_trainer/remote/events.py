@@ -13,12 +13,17 @@ class CallbackModule(CallbackBase):
         # Secret-bearing task arguments and module results are never logged.
         if not result._result.get('_ansible_no_log') and not task.no_log:
             args=task.args or {}
-            d['src']=str(args.get('src',''));d['dest']=str(args.get('dest',''))
-            d['url']=str(args.get('url',''))
+            # Only retain question-specific paths/URLs, never arbitrary task values.
+            for key in ('src','dest'):
+                value=str(args.get(key,''))
+                if re.fullmatch(r'[A-Za-z0-9_./-]{1,240}',value):d[key]=value
+            if args.get('url')=='http://172.25.254.254/content/hwreport.empty':
+                d['url']=args['url']
             raw=str(args.get('_raw_params',''))
             if 'http://172.25.254.254/content/hwreport.empty' in raw:d['url']='http://172.25.254.254/content/hwreport.empty'
             msg=str(result._result.get('msg',''))
-            if status in ('failed','unreachable') and not re.search(r'password|secret|vault|token',msg,re.I):d['error']=msg[:800]
+            # Arbitrary failure messages can contain secrets without identifying keywords.
+            # Host, module, role and status identify the failed task without persisting msg.
             for phrase in ('Could not create logical volume of that size','Volume group does not exist','Could not create partition of that size','disk /dev/vdd does not exist'):
                 if phrase in msg:d.setdefault('messages',[]).append(phrase)
         with open(os.environ['RHCE_EVENT_FILE'],'a') as f:f.write(json.dumps(d)+'\n')

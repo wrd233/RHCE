@@ -23,7 +23,9 @@ become_ask_pass = False
 class Engine:
     def __init__(self):
         state.setup()
-        self.config=state.load('connection.json',dict(host='rhce.lab0.cn',port=9007,user='root',pdf='/Users/wangrundong/Downloads/RHCE9.0模拟题新版(答案).pdf'))
+        pdf=next(Path(__file__).resolve().parents[2].glob('RHCE9.0*.pdf'),None)
+        self.config=dict(host='rhce.lab0.cn',port=9007,user='root',pdf=str(pdf) if pdf else '')
+        self.config.update(state.load('connection.json',{}))
         self.t=Transport(self.config)
     def identity(self):
         host=self.t.run('hostname').require().strip()
@@ -34,21 +36,54 @@ class Engine:
         if any(not re.fullmatch('[0-9a-f-]{36}',v) for v in ids.values()):raise RuntimeError('VM UUID 异常')
         script=self.t.run('sha256sum /usr/local/bin/rht-vmctl').require().split()[0]
         return dict(host=host,uuids=ids,vmctl_sha256=script)
-    def guard(self,nodes):
+    def guard(self,nodes,require_space=True):
         if not nodes or len(set(nodes))!=len(nodes) or not set(nodes)<=set(VMS):raise ValueError('拒绝未知或宽泛 VM 范围')
         binding=state.load('binding.json')
         if not binding:raise RuntimeError('先运行 rhce init 建立身份绑定和基线')
         current=self.identity()
         if current!=binding:raise RuntimeError('入口/VM UUID/官方管理脚本变化；停止，不执行破坏操作')
-        free=int(self.t.run("df -B1 --output=avail /var/lib/libvirt/images | tail -1").require().strip())
-        if free<8*1024**3:raise RuntimeError('宿主机可用空间不足 8 GiB，停止创建保存点')
+        if require_space:
+            free=int(self.t.run("df -B1 --output=avail /var/lib/libvirt/images | tail -1").require().strip())
+            if free<8*1024**3:raise RuntimeError('宿主机可用空间不足 8 GiB，停止创建保存点')
+    def snapshot_disks(self,h,label):
+        if h not in NODES or not re.fullmatch(r'[A-Za-z0-9-]{1,80}',label or ''):
+            raise ValueError('保存点范围或名称无效')
+        rows=self.t.run('virsh domblklist '+h+' --details').require().splitlines()
+        paths=[]
+        for row in rows:
+            fields=row.split()
+            if len(fields)==4 and fields[1]=='disk':
+                path=fields[3]
+                if not re.fullmatch('/var/lib/libvirt/images/rh294-'+h+r'-vd[a-z]\.ovl',path):
+                    raise RuntimeError('VM 磁盘路径不符合实验范围：'+path)
+                paths.append(path)
+        if not paths:raise RuntimeError('未找到 VM 磁盘：'+h)
+        for path in paths:
+            self.t.run('test -s '+shlex.quote(path+'-'+label)).require()
+        return paths
+    def adopt_baseline(self,label):
+        if state.load('baseline.json'):raise RuntimeError('已有本地基线，拒绝覆盖')
+        if not re.fullmatch(r'rhce-baseline-[A-Za-z0-9-]+',label):raise ValueError('只接受明确的 rhce-baseline 保存点名称')
+        binding=self.identity()
+        disks={h:self.snapshot_disks(h,label) for h in NODES}
+        state.save('binding.json',binding)
+        state.save('baseline.json',dict(label=label,nodes=list(NODES),identity=binding,disks=disks,adopted=True,created=time.time()))
+        print('已接管既有命名基线；未修改虚拟机。后续恢复仍会核对全部磁盘。')
     def vm(self,action,h,label=None,start=True):
-        if h not in VMS or action not in ('save','restore','reset'):raise ValueError('VM 操作不在白名单')
+        if h not in NODES or action not in ('save','restore','reset','start'):raise ValueError('VM 操作不在白名单')
         if action in ('save','restore') and not re.fullmatch(r'[A-Za-z0-9-]{1,80}',label or ''):raise ValueError('保存点名称无效')
-        cmd=shlex.join(['/usr/local/bin/rht-vmctl','-y']+([] if start else ['-n'])+[action,h]+([label] if label else []))
+        if action=='restore':self.snapshot_disks(h,label)
+        # Verify copying while stopped: the official script does not propagate rsync failures.
+        cmd=shlex.join(['/usr/local/bin/rht-vmctl','-y']+(['-n'] if action in ('save','restore') or not start else [])+[action,h]+([label] if label else []))
         r=self.t.run(cmd,timeout=300)
         if r.rc or 'Error:' in r.out:raise RuntimeError(r.out+r.err)
-        if start:self.t.wait(h)
+        if action in ('save','restore'):
+            if self.t.run('virsh domstate '+h).require().strip()!='shut off':
+                raise RuntimeError('磁盘校验前 VM 未停止：'+h)
+            for path in self.snapshot_disks(h,label):
+                self.t.run('cmp -s '+shlex.quote(path)+' '+shlex.quote(path+'-'+label),timeout=300).require()
+            if start:self.vm('start',h)
+        elif start:self.t.wait(h)
     def backup(self):
         # A failed backup must prevent reset. Never write backup into source tree.
         exists=self.t.ws('test -d '+BASE)
@@ -73,11 +108,18 @@ class Engine:
                 try:job.result();journal['saved'].append(h);print('已保存现场：'+h,flush=True)
                 except Exception as exc:errors.append(h+': '+str(exc))
                 state.save('journals/'+tag+'.json',journal)
-        if errors:raise RuntimeError('现场保存不完整，未恢复基线：'+'; '.join(errors))
+        if errors:
+            journal['phase']='save_failed';state.save('journals/'+tag+'.json',journal)
+            # Saving stops VMs; bring every attempted VM back without changing its disks.
+            for h in nodes:
+                try:
+                    if self.t.run('virsh domstate '+h).require().strip()!='running':self.vm('start',h)
+                except Exception as exc:errors.append('启动 '+h+': '+str(exc))
+            raise RuntimeError('现场保存不完整，未恢复基线：'+'; '.join(errors))
         journal['phase']='ready';state.save('journals/'+tag+'.json',journal)
         return journal
     def restore_scene(self,j):
-        self.guard(j['nodes'])
+        self.guard(j['nodes'],require_space=False)
         j['phase']='restoring';state.save('journals/'+j['id']+'.json',j)
         failures=[]
         with ThreadPoolExecutor(max_workers=5) as pool:
@@ -92,7 +134,7 @@ class Engine:
         j['phase']='recovered' if not failures else 'recovery_required';state.save('journals/'+j['id']+'.json',j)
         if failures:raise RuntimeError('恢复未完成，运行 rhce recover '+j['id']+'；'+'; '.join(failures))
     def baseline(self,nodes):
-        self.guard(nodes)
+        self.guard(nodes,require_space=False)
         baseline=state.load('baseline.json')
         if not baseline:raise RuntimeError('没有可用基线')
         for h in nodes:
@@ -130,10 +172,10 @@ class Engine:
                 self.t.dev('ansible-galaxy role install -r roles/requirements.yml -p roles --force').require()
             # Prerequisite Q8 is applied independently; target Q9 remains undone.
             for h in ('serverc','serverd'):
-                self.t.node(h,'dnf -y install httpd firewalld; systemctl enable --now httpd firewalld; firewall-cmd --permanent --add-service=http; firewall-cmd --add-service=http; printf "Welcome to %s on %s\\n" "$(hostname -f)" "$(hostname -I | cut -d\" \" -f1)" > /var/www/html/index.html',timeout=600).require()
+                self.t.node(h,'set -e; dnf -y install httpd firewalld php; systemctl enable --now httpd firewalld php-fpm; firewall-cmd --permanent --add-service=http; firewall-cmd --add-service=http; printf "Welcome to %s on %s\\n" "$(hostname -f)" "$(hostname -I | cut -d\" \" -f1)" > /var/www/html/index.html',timeout=600).require()
             self.t.node('bastion','systemctl disable --now httpd 2>/dev/null || true').require()
         if n==10:
-            for h in ('servera','serverb','serverc','serverd'):
+            def prepare_volume(h):
                 end=800 if h in ('servera','serverb') else 600
                 cmd=f'''set -e
 [ -b /dev/vdb ]
@@ -147,8 +189,10 @@ vgcreate research /dev/vdb1
 vgs --noheadings --units m -o vg_name,vg_free research
 '''
                 self.t.node(h,cmd,timeout=600).require()
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                list(pool.map(prepare_volume,('servera','serverb','serverc','serverd')))
         if n==11:
-            self.t.node('servera','test ! -b /dev/vdd; test "$(lsblk -n -o TYPE /dev/vdb | wc -l)" -eq 1').require()
+            self.t.node('servera','set -e; test ! -b /dev/vdd; test "$(lsblk -n -o TYPE /dev/vdb | wc -l)" -eq 1; dnf -y install parted',timeout=600).require()
         if n==14:
             # Firewall running is an environmental prerequisite; HTTP remains closed.
             self.t.node('servera','systemctl start firewalld').require()
@@ -169,10 +213,26 @@ vgs --noheadings --units m -o vg_name,vg_free research
     def reset(self,q):
         backup=self.backup()
         j=self.save_scene(q['nodes'],'reset',q['id']) if q['nodes'] else None
-        if j:self.baseline(q['nodes'])
-        self.clear_artifacts(q);self.prepare(q)
+        try:
+            if j:
+                j['phase']='preparing';state.save('journals/'+j['id']+'.json',j)
+                self.baseline(q['nodes'])
+            self.clear_artifacts(q);self.prepare(q)
+        except BaseException:
+            if j:self.restore_scene(j)
+            raise
+        if j:
+            j['phase']='prepared';state.save('journals/'+j['id']+'.json',j)
         state.save('current.json',dict(question=q['id'],backup=backup,journal=j['id'] if j else None,time=time.time()))
         print('第 '+str(q['id'])+' 题已准备；目标题产物未写入。备份：'+str(backup))
+    def restore_lab(self):
+        j=self.save_scene(list(NODES),'restore')
+        try:self.baseline(list(NODES))
+        except BaseException:
+            self.restore_scene(j)
+            raise
+        j['phase']='prepared';state.save('journals/'+j['id']+'.json',j)
+        return j
     def init(self):
         # Only first-time initialization; no implicit fullreset / deletion of saves.
         if state.load('baseline.json'):raise RuntimeError('基线已存在；无需再次 init')

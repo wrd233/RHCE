@@ -1,5 +1,5 @@
-import argparse,json,sys,subprocess
-from .model import QUESTIONS,question
+import argparse,json,sys,subprocess,contextlib
+from .model import QUESTIONS,question,plan
 from .engine import Engine
 from .transport import VMS,NODES
 from .grading import Grading
@@ -10,6 +10,7 @@ def main():
  sub=p.add_subparsers(dest='command',required=True)
  sub.add_parser('list');sub.add_parser('status');sub.add_parser('doctor');sub.add_parser('connect')
  sub.add_parser('init',help='首次从原始镜像建立五个受管节点的命名基线')
+ s=sub.add_parser('adopt-baseline',help='迁移电脑后接管明确的已有基线；只读核对 VM 与全部磁盘');s.add_argument('label')
  for name in ('show','reset','grade','plan'):
   s=sub.add_parser(name);s.add_argument('number',type=int,choices=range(1,20))
   if name=='grade':
@@ -25,21 +26,35 @@ def main():
   if a.command=='show':
    q=question(a.number);print(f"第{q['id']}题 {q['title']}\n\n{q['question']}\n\n工作目录：{q['base']}\n提交：{', '.join(q['artifacts'])}\n前置题：{q['dependencies']}");return
   if a.command=='plan' or (a.command=='reset' and a.dry_run):
-   print(json.dumps(question(a.number),ensure_ascii=False,indent=2));return
+   print(json.dumps(plan(a.number),ensure_ascii=False,indent=2));return
   e=Engine()
   if a.command=='connect':
    cmd=[x for x in e.t.base];i=cmd.index('BatchMode=yes');cmd[i]='BatchMode=no'
    subprocess.run(cmd+['true'],check=True);print('SSH 已连接，密码未保存。');return
   if a.command=='doctor':
    identity=e.identity();print('入口身份与 VM 清单：正常')
+   failed=[]
    for h in VMS:
     r=e.t.ws('hostname') if h=='workstation' else e.t.node(h,'hostname')
-    print(('PASS' if r.rc==0 else 'FAIL')+' '+h+' '+r.out.strip())
-   print(e.t.dev('ansible --version').require());print('基线：'+str(state.load('baseline.json')));return
+    correct=r.rc==0 and r.out.strip()==h+'.lab.example.com'
+    print(('PASS' if correct else 'FAIL')+' '+h+' '+r.out.strip())
+    if not correct:failed.append(h)
+   print(e.t.dev('ansible --version').require())
+   baseline=state.load('baseline.json')
+   if baseline:
+    if state.load('binding.json')!=identity:raise RuntimeError('本地身份绑定与当前环境不一致')
+    for h in NODES:e.snapshot_disks(h,baseline['label'])
+    print('基线：'+baseline['label']+'（全部磁盘保存点存在）')
+   else:print('尚无本地基线；初次使用 init，迁移电脑使用 adopt-baseline <明确名称>')
+   if failed:raise RuntimeError('SSH 不可达：'+', '.join(failed))
+   return
   if a.command=='status':
    print(json.dumps({'current':state.load('current.json'),'baseline':state.load('baseline.json'),'journals':[{'id':x.stem,'phase':json.loads(x.read_text()).get('phase')} for x in sorted((state.STATE/'journals').glob('*.json'))]},ensure_ascii=False,indent=2));return
-  with state.locked():
+  if a.command=='restore-lab' and a.dry_run:
+   print('将备份现场并恢复：'+', '.join(NODES));return
+  with state.locked(), (contextlib.nullcontext() if a.command=='adopt-baseline' else e.t.lease()):
    if a.command=='init':e.init();print('命名基线已创建。')
+   elif a.command=='adopt-baseline':e.adopt_baseline(a.label)
    elif a.command=='reset':e.reset(question(a.number))
    elif a.command=='recover':
     if '/' in a.journal or '..' in a.journal:raise ValueError('恢复点名称无效')
@@ -49,10 +64,10 @@ def main():
      cleanup=Grading(e,question(j['question']));cleanup.run_directory=j['runner'];cleanup.stop_runner()
     e.restore_scene(j)
    elif a.command=='restore-lab':
-    if a.dry_run:print('将备份现场并恢复：'+', '.join(NODES));return
-    j=e.save_scene(list(NODES),'restore');e.baseline(list(NODES));print('五个受管节点已恢复；控制节点答案保留。恢复点：'+j['id'])
+    j=e.restore_lab();print('五个受管节点已恢复；控制节点答案保留。恢复点：'+j['id'])
    elif a.command=='grade':
-    r=Grading(e,question(a.number),a.profile).grade()
+    with contextlib.redirect_stdout(sys.stderr):
+     r=Grading(e,question(a.number),a.profile).grade()
     path='reports/'+state.stamp()+f'-q{a.number}.json';state.save(path,r)
     if a.json:print(json.dumps(r,ensure_ascii=False,indent=2))
     else:

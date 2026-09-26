@@ -14,10 +14,16 @@
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
       "inventory",
-      "ansible.cfg"
+      "ansible.cfg",
+      "workstation: Ansible 软件包"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "ansible-inventory --list",
+      "ansible-config dump --only-changed",
+      "rpm -q ansible-core ansible-navigator"
+    ]
   },
   {
     "id": 2,
@@ -45,10 +51,14 @@
       "serverc",
       "serverd",
       "bastion",
-      "yum_repo.yml"
+      "yum_repo.yml",
+      "受管节点: /etc/yum.repos.d/*.repo"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "读取 /etc/yum.repos.d/*.repo 并解析 INI"
+    ]
   },
   {
     "id": 3,
@@ -75,10 +85,17 @@
       "serverb",
       "serverc",
       "serverd",
-      "packages.yml"
+      "packages.yml",
+      "dev/test/prod: php,mariadb",
+      "dev: Development Tools、全部软件包"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "rpm -q php mariadb",
+      "dnf group list --installed --hidden",
+      "dnf check-update"
+    ]
   },
   {
     "id": 4,
@@ -107,16 +124,25 @@
       "serverc",
       "serverd",
       "bastion",
-      "timesync.yml"
+      "timesync.yml",
+      "workstation: rhel-system-roles",
+      "受管节点: chronyd、/etc/chrony.conf"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "systemctl is-active chronyd",
+      "chronyc -n sources",
+      "读取 /etc/chrony.conf",
+      "Ansible 系统角色事件"
+    ]
   },
   {
     "id": 5,
     "title": "使用 SELinux RHEL 系统角色",
     "dependencies": [
-      1
+      1,
+      2
     ],
     "nodes": [
       "servera",
@@ -138,10 +164,17 @@
       "serverc",
       "serverd",
       "bastion",
-      "selinux.yml"
+      "selinux.yml",
+      "workstation: rhel-system-roles",
+      "受管节点: SELinux 运行态、/etc/selinux/config"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "getenforce",
+      "读取 /etc/selinux/config",
+      "Ansible 系统角色事件"
+    ]
   },
   {
     "id": 6,
@@ -162,10 +195,16 @@
     "touched_resources": [
       "roles/requirements.yml",
       "roles/balancer",
-      "roles/phpinfo"
+      "roles/phpinfo",
+      "workstation: roles/balancer、roles/phpinfo"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "解析 roles/requirements.yml 的名称和 URL",
+      "ansible-galaxy role install 到临时空目录",
+      "核对安装角色文件"
+    ]
   },
   {
     "id": 7,
@@ -175,17 +214,22 @@
     ],
     "nodes": [],
     "artifacts": [
-      "mycollections"
+      "mycollections/ansible_collections/ansible/posix",
+      "mycollections/ansible_collections/community/general"
     ],
     "playbook": null,
     "question": "将 http://content.example.com/ansible-posix-1.5.1.tar.gz、community-general-6.3.0.tar.gz 安装到本目录 mycollections，供 devops 使用。",
     "base": "/home/devops/ansible",
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
-      "mycollections"
+      "mycollections/ansible_collections/ansible/posix",
+      "mycollections/ansible_collections/community/general"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "读取 MANIFEST.json 与 FILES.json，逐文件 SHA256"
+    ]
   },
   {
     "id": 8,
@@ -212,10 +256,17 @@
       "serverc",
       "serverd",
       "roles/apache",
-      "newrole.yml"
+      "newrole.yml",
+      "webservers: httpd、firewalld、HTTP 规则、/var/www/html/index.html"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "systemctl is-active/is-enabled httpd firewalld",
+      "firewall-cmd 运行及持久规则",
+      "从 workstation HTTP 访问两台 webservers",
+      "apache 角色及指定模板执行事件"
+    ]
   },
   {
     "id": 9,
@@ -223,6 +274,7 @@
     "dependencies": [
       1,
       2,
+      3,
       6,
       7,
       8
@@ -243,10 +295,17 @@
       "serverc",
       "serverd",
       "bastion",
-      "roles.yml"
+      "roles.yml",
+      "balancers: haproxy",
+      "webservers: httpd、PHP、/var/www/html/hello.php"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "角色执行事件",
+      "重复 HTTP 请求 bastion",
+      "HTTP 请求各 webservers/hello.php"
+    ]
   },
   {
     "id": 10,
@@ -276,11 +335,18 @@
       "serverc",
       "serverd",
       "bastion",
-      "lv.yml"
+      "lv.yml",
+      "受管节点: /dev/vdb 分区、research 卷组、data 逻辑卷、ext4"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
     "conflicts": [
       11
+    ],
+    "verification_commands": [
+      "lvs --reportformat json --units b --nosuffix",
+      "blkid -s TYPE -o value /dev/research/data",
+      "findmnt 运行与持久挂载",
+      "按主机匹配容量不足/卷组缺失事件"
     ]
   },
   {
@@ -303,11 +369,18 @@
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
       "servera",
-      "parted.yml"
+      "parted.yml",
+      "servera: /dev/vdb1、ext4、/mnt/fs01、/etc/fstab"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
     "conflicts": [
       10
+    ],
+    "verification_commands": [
+      "lsblk -b -J",
+      "findmnt /mnt/fs01",
+      "findmnt --fstab --evaluate /mnt/fs01",
+      "容量不足及缺盘消息"
     ]
   },
   {
@@ -330,7 +403,8 @@
     "touched_resources": [
       "servera",
       "hosts.j2",
-      "hosts.yml"
+      "hosts.yml",
+      "servera: /etc/myhosts"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
     "conflicts": [],
@@ -340,6 +414,10 @@
       "serverc",
       "serverd",
       "bastion"
+    ],
+    "verification_commands": [
+      "指定 hosts.j2 模板执行事件",
+      "解析 /etc/myhosts；忽略行序"
     ]
   },
   {
@@ -368,10 +446,15 @@
       "serverc",
       "serverd",
       "bastion",
-      "issue.yml"
+      "issue.yml",
+      "dev/test/prod: /etc/issue"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "逐主机读取 /etc/issue",
+      "全部主机 Ansible 执行事件"
+    ]
   },
   {
     "id": 14,
@@ -393,10 +476,16 @@
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
       "servera",
-      "webcontent.yml"
+      "webcontent.yml",
+      "servera: httpd、防火墙、/webdev、/var/www/html/webdev、SELinux 标签"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "lstat/readlink /webdev 与符号链接",
+      "读取 /webdev/index.html",
+      "从 workstation HTTP 访问 /webdev/"
+    ]
   },
   {
     "id": 15,
@@ -424,10 +513,15 @@
       "serverc",
       "serverd",
       "bastion",
-      "hwreport.yml"
+      "hwreport.yml",
+      "受管节点: /root/hwreport.txt"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "比较 hwreport.txt 键值与实时内存、BIOS、磁盘容量",
+      "下载 URL 执行事件"
+    ]
   },
   {
     "id": 16,
@@ -446,10 +540,14 @@
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
       "locker.yml",
-      "secret.txt"
+      "secret.txt",
+      "workstation: Vault 库与密码文件"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "VaultLib 解密及 YAML 变量校验；不输出敏感值"
+    ]
   },
   {
     "id": 17,
@@ -478,10 +576,15 @@
       "serverc",
       "serverd",
       "users.yml",
-      "user_list.yml"
+      "user_list.yml",
+      "dev/test/prod: 题目列表中的用户、附加组、shadow"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "user_list.yml 语义比较",
+      "pwd/grp/spwd/crypt 校验账户、附加组和 SHA512 密码；不输出散列"
+    ]
   },
   {
     "id": 18,
@@ -498,10 +601,14 @@
     "base": "/home/devops/ansible",
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
-      "salaries.yml"
+      "salaries.yml",
+      "workstation: salaries.yml 加密内容"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "VaultLib 新旧密码解密校验及明文内容相等；不输出明文"
+    ]
   },
   {
     "id": 19,
@@ -521,9 +628,15 @@
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [
       "servera",
-      "cron.yml"
+      "cron.yml",
+      "servera: natasha、natasha 的 crontab"
     ],
     "verification": "独立 checkpoint 见 graders.py；运行结果及逐项证据保存于本地报告",
-    "conflicts": []
+    "conflicts": [],
+    "verification_commands": [
+      "id natasha",
+      "crontab -l -u natasha",
+      "按语义解析 cron 分钟表达式"
+    ]
   }
 ]

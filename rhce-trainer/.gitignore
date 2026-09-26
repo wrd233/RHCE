@@ -4,3 +4,17 @@ __pycache__/
 .pytest_cache/
 *.tar.gz
 *.log
+build/
+dist/
+.DS_Store
+.env
+.env.*
+connection.json
+binding.json
+baseline.json
+backups/
+reports/
+journals/
+*.pdf
+*.pem
+*.key

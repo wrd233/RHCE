@@ -9,7 +9,7 @@
 - 6：PDF 建议在 f0 放文件仅为辅助说明，不执行；实测课堂资源 URL 均返回 200。
 - 7：检查安装的命名空间、名称、版本及实际文件，不能只看空目录。
 - 8：httpd 要安装并开机启用；题目要求可提供页面，因此实际 HTTP 访问也检查。模板需要动态生成，模板存在本身不算使用。
-- 9：例子漏写 `.lab`，PHP 验证把 from 写成 form；以原要求 FQDN/from 为准。若给定角色自身产生 form，明确报告题源冲突，不给错误输出满分。
+- 9：例子漏写 `.lab`，PHP 验证把 from 写成 form；以原要求 FQDN/from 为准。现场确认给定 phpinfo 角色产生 form，且模板没有 phpinfo()、任务未安装 PHP。reset 补齐第 3 题的 PHP 前提；验收用例显式修正角色拼写并增加 PHP 详情，原始下载角色和评分要求不偷偷改动。仅原样套用这个资源不会获得满分。
 - 10：准备说明称 c/d 500 MiB，命令是 600 MiB 分区（可用约 596 MiB）。两者均可覆盖 600 失败、400 成功，本工具采用命令所示容量。不得直接对用户磁盘 dd 清零。
 - 11：两盘同时存在时题面要求与单一挂载点有歧义；当前新基线为 vdd 不存在、vdb=1 GiB。本版本对该真实场景评分，不声称覆盖虚拟的 1500 MiB 成功分支。
 - 12：第 15 页题面黄色示例明确写 172.25.254.10–13，首页、实际主机和答案验证写 172.25.250.10–13。遵从用户优先级，默认 `pdf` 模式采用题面；`--profile live` 显式选择环境地址，不偷偷改规则。报告记录选择。
@@ -20,7 +20,7 @@
 
 ## 安全边界
 
-仅通过官方 rht-vmctl 管理 workstation/servera/serverb/serverc/serverd/bastion；utility/classroom 为共享基础设施，不重置。每个虚拟机名称与 UUID 绑定。拒绝 all/everything、任意命令、未知 VM。f0 只读检查及官方 save/restore/reset；不安装软件、不修改其网络/SSH/服务。官方 fullreset 内部会删 VM 保存点并更新 known_hosts，因此默认不使用；完全恢复练习节点采用明确 baseline restore。
+仅通过官方 rht-vmctl 管理 servera/serverb/serverc/serverd/bastion；workstation 不参与 VM 重置，utility/classroom 为共享基础设施，不重置。每个虚拟机名称与 UUID 绑定。拒绝 all/everything、任意命令、未知 VM。f0 只读检查及官方 save/restore/reset/start；不安装软件、不修改其网络/SSH/服务。官方 fullreset 内部会删 VM 保存点并更新 known_hosts，因此默认不使用；完全恢复练习节点采用明确 baseline restore。
 
 首次已核实各磁盘无保存点，官方 reset 返回原始镜像，随后准备考试公共前提并创建命名基线。后续只能显式恢复该命名基线，不能用会挑选最新 save 的裸 reset。评分结束在 finally 恢复评分前 VM；中断留下本地 journal，可运行 recover。备份含答案或密码文件的可能性，保存在用户目录外置私有状态区，权限 700/600，不入仓库。
 

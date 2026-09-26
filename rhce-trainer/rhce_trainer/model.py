@@ -9,6 +9,25 @@ def question(n):
         if q['id']==int(n):return q
     raise ValueError('题号应在 1–19 之间')
 
+def dependency_order(n):
+    ordered=[];active=set();visited=set()
+    def visit(current):
+        if current in active:raise ValueError('题目依赖存在循环')
+        if current in visited:return
+        active.add(current)
+        for dependency in question(current)['dependencies']:visit(dependency)
+        active.remove(current);visited.add(current);ordered.append(current)
+    visit(n)
+    return ordered[:-1]
+
+def plan(n):
+    q=question(n)
+    return dict(q,prerequisite_order=dependency_order(n),
+                reset_vm_scope=q['nodes'],
+                grade_vm_scope=q.get('execution_nodes',q['nodes']),
+                reset_effect='范围内 VM 的全部状态恢复命名基线；原现场保留恢复点，控制节点答案先备份',
+                grade_effect='保存现场 → 基线 → 准备依赖 → 运行学生提交 → 逐项评分 → 恢复现场')
+
 def checkpoint(id,description,weight,passed,evidence,check):
     return dict(id=id,description=description,weight=weight,check=check,status='PASS' if passed else 'FAIL',passed=bool(passed),evidence=evidence)
 

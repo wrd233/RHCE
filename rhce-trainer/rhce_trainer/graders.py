@@ -1,5 +1,5 @@
 """Question-specific checkpoints. No reference YAML equality comparisons."""
-import json,re,shlex,hashlib
+import json,re,shlex,hashlib,ast
 from .transport import NODES
 from .engine import BASE
 
@@ -28,8 +28,9 @@ def apache(g):
         g.state_check(h+'.http-rule',h+' HTTP 持久及运行规则允许访问',5,opened,{k:c[k]['out'] for k in ('firewall_http','firewall_http_permanent','firewall_ports','firewall_ports_permanent')},'firewall-cmd runtime and permanent service/port checks')
         ip='172.25.250.'+('12' if h=='serverc' else '13');expect=f'Welcome to {h}.lab.example.com on {ip}'
         r=g.t.ws('curl -fsS --max-time 10 http://'+h+'/')
-        template=g.has_event(action='template',host=h,dest='/var/www/html/index.html')
-        g.state_check(h+'.page',h+' 模板生成正确页面且 HTTP 可达',10,r.rc==0 and r.out.strip()==expect and template,{'actual':r.out.strip(),'expected':expect,'template_used':template},'template event + curl from workstation')
+        template=g.has_event(action='template',role='apache',host=h,dest='/var/www/html/index.html',src='index.html.j2')
+        g.state_check(h+'.template',h+' apache 使用 index.html.j2 生成页面',5,template,{'template_used':template},'apache template event, source and destination')
+        g.state_check(h+'.page',h+' HTTP 页面内容正确',5,r.rc==0 and r.out.strip()==expect,{'actual':r.out.strip(),'expected':expect},'curl from workstation')
 
 def lvm(g):
     for h in NODES:
@@ -45,7 +46,7 @@ def lvm(g):
             valid=bool(data) and abs(float(data[0]['lv_size'])-size*1024**2)<1024**2
             fs=g.t.node(h,'blkid -s TYPE -o value /dev/research/data')
             mount=g.t.node(h,'findmnt -rn -S /dev/research/data')
-            persistent=g.t.node(h,'findmnt --fstab -rn -S /dev/research/data')
+            persistent=g.t.node(h,'findmnt --fstab --evaluate -rn -S /dev/research/data')
             msg=size==600 or g.message(h,'Could not create logical volume of that size')
             g.state_check(h+'.volume',h+f' data={size} MiB、ext4、未挂载及错误分支',15,valid and fs.out.strip()=='ext4' and mount.rc==1 and persistent.rc==1 and msg,{'lv':data,'filesystem':fs.out.strip(),'mount':mount.out,'fstab':persistent.out,'fallback_message':msg},'lvs bytes; blkid; findmnt runtime/fstab; host-specific events')
 
@@ -78,18 +79,22 @@ def packages(g):
 MANAGED[3]=packages
 
 def timesync(g):
+    installed=g.t.ws('rpm -q rhel-system-roles')
+    g.state_check('role-package','控制节点已安装 RHEL 系统角色软件包',5,installed.rc==0,installed.out,'rpm -q rhel-system-roles on workstation')
     role=all(g.has_event(role='timesync',host=h) for h in NODES)
-    g.state_check('role','所有节点实际使用 timesync 系统角色',20,role,sorted({e['role'] for e in g.events if e['role']}),'Ansible role events')
+    g.state_check('role','所有节点实际使用 timesync 系统角色',15,role,sorted({e['role'] for e in g.events if e['role']}),'Ansible role events')
     for h in NODES:
-        conf=g.file(h,'/etc/chrony.conf').get('text','')
+        conf=(g.file(h,'/etc/chrony.conf').get('text') or '')
         selected=any(re.match(r'^\s*(server|pool|peer)\s+classroom\.example\.com(?:\s|$)',l) for l in conf.splitlines())
         g.state_check(h+'.ntp',h+' 活动 NTP 提供程序使用 classroom.example.com',10,selected and g.out(h,'chrony')=='active',{'config':conf,'service':g.out(h,'chrony'),'sources':g.out(h,'ntp')},'chrony configuration + active service')
 MANAGED[4]=timesync
 
 def selinux(g):
-    g.state_check('role','所有节点实际使用 SELinux 系统角色',20,all(g.has_event(role='selinux',host=h) for h in NODES),sorted({e['role'] for e in g.events if e['role']}),'Ansible role events')
+    installed=g.t.ws('rpm -q rhel-system-roles')
+    g.state_check('role-package','控制节点已安装 RHEL 系统角色软件包',5,installed.rc==0,installed.out,'rpm -q rhel-system-roles on workstation')
+    g.state_check('role','所有节点实际使用 SELinux 系统角色',15,all(g.has_event(role='selinux',host=h) for h in NODES),sorted({e['role'] for e in g.events if e['role']}),'Ansible role events')
     for h in NODES:
-        conf=g.file(h,'/etc/selinux/config').get('text','')
+        conf=(g.file(h,'/etc/selinux/config').get('text') or '')
         ok=g.out(h,'selinux')=='Enforcing' and bool(re.search(r'^SELINUX=enforcing\s*$',conf,re.M))
         g.state_check(h+'.enforcing',h+' 运行中及持久状态 enforcing',10,ok,{'runtime':g.out(h,'selinux'),'config':conf},'getenforce + /etc/selinux/config')
 MANAGED[5]=selinux
@@ -111,11 +116,11 @@ def partition(g):
 MANAGED[11]=partition
 
 def hosts(g):
-    text=g.file('servera','/etc/myhosts').get('text','');parsed={}
+    text=(g.file('servera','/etc/myhosts').get('text') or '');parsed={}
     for line in text.splitlines():
         tokens=line.split('#',1)[0].split()
         if len(tokens)>=2:parsed[tokens[0]]=set(tokens[1:])
-    g.state_check('template','使用 hosts.j2 模板生成 /etc/myhosts',15,g.has_event('template',host='servera',dest='/etc/myhosts'),{'events':[e for e in g.events if e['action'].endswith('template')]},'template execution event')
+    g.state_check('template','使用 hosts.j2 模板生成 /etc/myhosts',15,g.has_event('template',host='servera',dest='/etc/myhosts',src='hosts.j2'),{'events':[e for e in g.events if e['action'].endswith('template')]},'template execution event including source')
     localhost={'127.0.0.1':{'localhost','localhost.localdomain','localhost4','localhost4.localdomain4'},'::1':{'localhost','localhost.localdomain','localhost6','localhost6.localdomain6'}}
     g.state_check('loopback','IPv4/IPv6 localhost 行',5,all(names<=parsed.get(ip,set()) for ip,names in localhost.items()),text,'parse /etc/myhosts')
     for h,i in zip(NODES,[10,11,12,13,254]):
@@ -126,7 +131,7 @@ MANAGED[12]=hosts
 
 def webcontent(g):
     d=g.file('servera','/webdev');link=g.file('servera','/var/www/html/webdev');page=g.file('servera','/webdev/index.html')
-    g.state_check('directory','/webdev 目录组 devops、权限 2775',20,d.get('exists') and d.get('group')=='devops' and d.get('mode')=='0o2775',d,'lstat + group lookup')
+    g.state_check('directory','/webdev 目录组 devops、权限 2775',20,d.get('kind')=='directory' and d.get('group')=='devops' and d.get('mode')=='0o2775',d,'lstat + group lookup')
     g.state_check('symlink','Web 路径符号链接到 /webdev',15,link.get('link')=='/webdev',link,'readlink /var/www/html/webdev')
     g.state_check('content','index.html 为单行 Development',15,page.get('text') in ('Development','Development\n'),page,'read /webdev/index.html')
     r=g.t.ws('curl -fsS --max-time 10 http://servera/webdev/')
@@ -136,7 +141,7 @@ MANAGED[14]=webcontent
 def hwreport(g):
     g.state_check('download','从指定 URL 获取报告模板',10,all(any(e['host']==h and e['status']=='ok' and e.get('url')=='http://172.25.254.254/content/hwreport.empty' for e in g.events) for h in NODES),[e for e in g.events if e.get('url')],'download execution evidence')
     for h in NODES:
-        text=g.file(h,'/root/hwreport.txt').get('text','');values={}
+        text=(g.file(h,'/root/hwreport.txt').get('text') or '');values={}
         for line in text.splitlines():
             if '=' in line:
                 k,v=line.split('=',1);values[k.strip()]=v.strip()
@@ -151,16 +156,29 @@ def hwreport(g):
         g.state_check(h+'.hardware',h+' 主机名/内存/BIOS/磁盘报告',12,ok,{'actual':values,'expected':{'hostname':h,'memory':g.out(h,'memory'),'bios':g.out(h,'bios'),'disk_bytes':sizes}},'hardware observations vs key=value report')
 MANAGED[15]=hwreport
 
+def cron_minutes(expression):
+    """Expand the standard minute field, including lists, ranges and steps."""
+    result=set()
+    try:
+        for token in expression.split(','):
+            parts=token.split('/')
+            if len(parts)>2:return set()
+            span=parts[0];step=int(parts[1]) if len(parts)==2 else 1
+            if step<1:return set()
+            if span=='*':lo,hi=0,59
+            elif '-' in span:lo,hi=map(int,span.split('-'))
+            else:lo=hi=int(span)
+            if not 0<=lo<=hi<=59:return set()
+            result.update(range(lo,hi+1,step))
+    except (ValueError,TypeError):return set()
+    return result
+
 def cron(g):
     raw=g.out('servera','cron');lines=[l.split() for l in raw.splitlines() if l.strip() and not l.lstrip().startswith('#')]
     jobs=[l for l in lines if len(l)>=7 and ' '.join(l[5:])=='echo hello']
-    def minutes(s):
-        if s=='*/2':return True
-        try:return set(map(int,s.split(',')))==set(range(0,60,2))
-        except ValueError:return False
     g.state_check('user','natasha 存在',10,g.t.node('servera','id natasha').rc==0,'检查用户 natasha','id natasha')
     g.state_check('command','natasha 的任务命令为 echo hello',25,len(jobs)>0,raw,'crontab -l -u natasha')
-    g.state_check('schedule','每两分钟执行，其他时间字段无限制',35,any(minutes(l[0]) and l[1:5]==['*']*4 for l in jobs),raw,'semantic cron schedule check')
+    g.state_check('schedule','每两分钟执行，其他时间字段无限制',35,any(cron_minutes(l[0])==set(range(0,60,2)) and l[1:5]==['*']*4 for l in jobs),raw,'semantic cron schedule check')
 MANAGED[19]=cron
 
 def galaxy_use(g):
@@ -206,6 +224,15 @@ print(json.dumps(out))'''
         g.state_check(h+'.users',h+' 用户分配、SHA512 密码及附加组',15,all(x['passed'] for x in rows),rows,'getpwnam/getspnam + crypt verification (hash/password never logged)')
 MANAGED[17]=users
 
+def configured_paths(text,key):
+    for line in text.splitlines():
+        if line.startswith(key+'('):
+            try:
+                value=ast.literal_eval(line.split('=',1)[1].strip())
+                return value if isinstance(value,list) else [value]
+            except (ValueError,SyntaxError,IndexError):return []
+    return []
+
 def config(g):
     r=g.command('ansible-inventory --list')
     try:inv=json.loads(r.out)
@@ -220,7 +247,7 @@ def config(g):
     text=r.out
     for key,expected in [('DEFAULT_HOST_LIST',BASE+'/inventory'),('DEFAULT_ROLES_PATH',BASE+'/roles'),('COLLECTIONS_PATHS',BASE+'/mycollections')]:
         lines=[l for l in text.splitlines() if l.startswith(key+'(')]
-        g.add(key,key+' 有效配置',10,bool(lines) and expected in lines[0],lines,'ansible-config dump --only-changed')
+        g.add(key,key+' 有效配置',10,expected in configured_paths(text,key),lines,'ansible-config dump --only-changed, exact path membership')
     r=g.t.ws('rpm -q ansible-core ansible-navigator')
     g.add('software','所需 Ansible 软件包已安装',10,r.rc==0,r.out,'rpm -q ansible-core ansible-navigator')
 CONTROLLER[1]=config
@@ -229,17 +256,27 @@ def install_roles(g):
     # Requirements must work in an empty target, not merely point at existing roles.
     import uuid
     tmp='/tmp/rhce-galaxy-'+uuid.uuid4().hex
+    code='''import json,yaml
+try:
+ data=yaml.safe_load(open('roles/requirements.yml'))
+ if isinstance(data,dict):data=data.get('roles',[])
+ expected={'balancer':'http://classroom.example.com/content/haproxy.tar.gz','phpinfo':'http://classroom.example.com/content/phpinfo.tar.gz'}
+ print(json.dumps({'sources_match':isinstance(data,list) and all(any(isinstance(row,dict) and row.get('name')==name and row.get('src')==url for row in data) for name,url in expected.items())}))
+except Exception:print(json.dumps({'sources_match':False}))'''
+    source_result=g.command('python3 -c '+shlex.quote(code))
+    sources=json.loads(source_result.require())
     r=g.command('ansible-galaxy role install -r roles/requirements.yml -p '+tmp)
-    g.add('requirements','requirements.yml 能在空目录安装两个角色',30,r.rc==0,{'returncode':r.rc},'ansible-galaxy role install in fresh temporary directory')
+    g.add('requirements','requirements.yml 使用指定 URL 并能在空目录安装',30,r.rc==0 and sources['sources_match'],dict(returncode=r.rc,**sources),'requirements source validation + ansible-galaxy fresh install')
     for role in ('balancer','phpinfo'):
         script='''import pathlib,json,hashlib,sys
 original=pathlib.Path(sys.argv[1]); installed=pathlib.Path(sys.argv[2]); files=[p for p in original.rglob('*') if p.is_file() and '.galaxy_install_info' not in str(p)]
 missing=[str(p.relative_to(original)) for p in files if not (installed/p.relative_to(original)).is_file()]
-print(json.dumps(dict(reference_files=len(files),missing=missing,tasks=(installed/'tasks/main.yml').is_file())))'''
+changed=[str(p.relative_to(original)) for p in files if (installed/p.relative_to(original)).is_file() and p.read_bytes()!=(installed/p.relative_to(original)).read_bytes()]
+print(json.dumps(dict(reference_files=len(files),missing=missing,changed=changed,tasks=(installed/'tasks/main.yml').is_file())))'''
         r2=g.command('python3 -c '+shlex.quote(script)+' '+shlex.quote(tmp+'/'+role)+' '+shlex.quote('roles/'+role))
         try:e=json.loads(r2.out)
         except ValueError:e={}
-        g.add(role+'.installed',role+' 安装位置与角色文件完整',30,r.rc==0 and e.get('reference_files',0)>0 and not e.get('missing') and e.get('tasks'),e,'compare installed file coverage with Galaxy fresh install')
+        g.add(role+'.installed',role+' 安装位置与角色文件完整',30,r.rc==0 and e.get('reference_files',0)>0 and not e.get('missing') and not e.get('changed') and e.get('tasks'),e,'compare installed role files with Galaxy fresh install; no playbook YAML comparison')
 CONTROLLER[6]=install_roles
 
 def install_collections(g):

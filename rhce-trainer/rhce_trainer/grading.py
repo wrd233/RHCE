@@ -12,8 +12,8 @@ class Grading:
     def add(self,id,desc,weight,ok,evidence,check):
         self.checks.append(checkpoint(id,desc,weight,ok,evidence,check))
     def command(self,cmd):return self.t.dev(cmd)
-    def has_event(self,action=None,role=None,host=None,dest=None):
-        return any(x['status']=='ok' and (action is None or x['action'].split('.')[-1]==action) and (role is None or role in x['role']) and (host is None or x['host']==host) and (dest is None or x.get('dest')==dest) for x in self.events)
+    def has_event(self,action=None,role=None,host=None,dest=None,src=None):
+        return any(x['status']=='ok' and (action is None or x['action'].split('.')[-1]==action) and (role is None or x['role'].split('.')[-1]==role) and (host is None or x['host']==host) and (dest is None or x.get('dest')==dest) and (src is None or Path(x.get('src','')).name==src) for x in self.events)
     def message(self,host,msg):return any(x['host']==host and x['status']=='ok' and msg in x.get('messages',[]) for x in self.events)
     def artifacts(self):
         code='''import json,os,pwd,pathlib,sys
@@ -95,7 +95,10 @@ print(json.dumps(out))'''
             managed(self)
             result=report(self.q,self.checks,mode='fresh-replay',profile=self.profile,journal=j['id'],execution=execution)
         finally:
-            self.stop_runner()
+            try:self.stop_runner()
+            except BaseException:
+                j['phase']='recovery_required';state.save('journals/'+j['id']+'.json',j)
+                raise RuntimeError('无法确认学生进程已停止，暂不覆盖 VM；运行 rhce recover '+j['id'])
             self.e.restore_scene(j)
         result['scene_restored']=True
         return result

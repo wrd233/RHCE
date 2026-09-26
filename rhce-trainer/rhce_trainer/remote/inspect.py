@@ -7,7 +7,7 @@ def cmd(s):
 def file(p):
  try:
   s=os.lstat(p)
-  return dict(exists=True,mode=oct(stat.S_IMODE(s.st_mode)),uid=s.st_uid,gid=s.st_gid,group=grp.getgrgid(s.st_gid).gr_name,link=os.readlink(p) if stat.S_ISLNK(s.st_mode) else None,text=pathlib.Path(p).read_text(errors='replace') if stat.S_ISREG(s.st_mode) and s.st_size<100000 else None)
+  return dict(exists=True,kind='directory' if stat.S_ISDIR(s.st_mode) else 'symlink' if stat.S_ISLNK(s.st_mode) else 'file' if stat.S_ISREG(s.st_mode) else 'other',mode=oct(stat.S_IMODE(s.st_mode)),uid=s.st_uid,gid=s.st_gid,group=grp.getgrgid(s.st_gid).gr_name,link=os.readlink(p) if stat.S_ISLNK(s.st_mode) else None,text=pathlib.Path(p).read_text(errors='replace') if stat.S_ISREG(s.st_mode) and s.st_size<100000 else None)
  except FileNotFoundError:return {'exists':False}
 r={'hostname':socket.getfqdn(),'files':{},'commands':{}}
 for p in ['/etc/issue','/etc/myhosts','/root/hwreport.txt','/var/www/html/index.html','/webdev','/webdev/index.html','/var/www/html/webdev','/etc/chrony.conf','/etc/selinux/config','/etc/fstab']:

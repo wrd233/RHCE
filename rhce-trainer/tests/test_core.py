@@ -148,9 +148,9 @@ class Tests(unittest.TestCase):
    self.assertEqual(target.read_text(),'[]')
  def test_issue_typo_fails_only_affected_checkpoint(self):
   from rhce_trainer.grading import Grading
-  g=Grading(Mock(),question(13));g.run_ok=True
+  g=Grading(Mock(),question(13));g.run_ok=True;g.replay_verified=True
   g.obs={h:{'files':{'/etc/issue':{'text':t+'\n'}}} for h,t in [('servera','Devlopment'),('serverb','Test'),('serverc','Production'),('serverd','Production')]}
-  g.events=[{'host':h} for h in ('servera','serverb','serverc','serverd','bastion')]
+  g.events=[{'host':h,'status':'ok'} for h in ('servera','serverb','serverc','serverd','bastion')]
   issue(g)
   self.assertFalse(g.checks[0]['passed']);self.assertTrue(all(c['passed'] for c in g.checks[1:]))
   self.assertEqual(sum(c['weight'] for c in g.checks),70)

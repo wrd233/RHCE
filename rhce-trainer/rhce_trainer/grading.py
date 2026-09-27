@@ -77,7 +77,11 @@ print(json.dumps(out))'''
     def state_check(self,id,desc,weight,predicate,evidence,check):
         # A failed host must not erase successful checkpoints on other hosts.
         # Partial credit is possible only after a verified baseline and real task events.
-        replay=self.run_ok or (self.replay_verified and any(e.get('status')=='ok' for e in self.events))
+        host=id.split('.',1)[0]
+        required_host=host if host in NODES else self.q['nodes'][0] if len(self.q['nodes'])==1 else None
+        replay=self.replay_verified and any(e.get('status')=='ok' and (required_host is None or e.get('host')==required_host) for e in self.events)
+        if predicate and not replay:
+            evidence={'observed':evidence,'reason':'缺少该检查点对应主机的基线重放成功事件，既有状态不计分'}
         self.add(id,desc,weight,replay and predicate,evidence,check)
     def grade(self):
         artifacts=self.artifacts()
@@ -97,8 +101,10 @@ print(json.dumps(out))'''
         j=self.e.save_scene(self.q.get('execution_nodes',self.q['nodes']),'grade',self.q['id'])
         try:
             j['phase']='grading';state.save('journals/'+j['id']+'.json',j)
+            print('正在恢复评分基线并准备依赖；VM 启动可能需要数分钟……',flush=True)
             self.e.baseline(self.q.get('execution_nodes',self.q['nodes']));self.e.prepare(self.q,grading=True)
             self.replay_verified=True
+            print('正在以 devops 执行提交并检查结果……',flush=True)
             execution=self.execute(j)
             if not self.run_ok:self.e.preflight(self.q)
             self.add('execution','以 devops 从正确基线执行成功',20,self.run_ok,{'returncode':self.run_result.rc,'failed_tasks':[x for x in self.events if x['status'] in ('failed','unreachable')]},'ansible-playbook '+self.q['playbook'])

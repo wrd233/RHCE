@@ -9,6 +9,9 @@ description = "Local RHCE 9 practice CLI with isolated replay grading"
 requires-python = ">=3.9"
 dependencies = []
 
+[project.optional-dependencies]
+pdf = ["pdfplumber>=0.10"]
+
 [project.scripts]
 rhce = "rhce_trainer.cli:main"
 

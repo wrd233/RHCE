@@ -10,7 +10,7 @@ from dataclasses import dataclass
 NODES = ('servera','serverb','serverc','serverd','bastion')
 NODE_ADDRESSES = dict(zip(NODES,('172.25.250.10','172.25.250.11','172.25.250.12','172.25.250.13','172.25.250.254')))
 VMS = ('workstation',) + NODES
-INNER = ['ssh','-o','BatchMode=yes','-o','ConnectTimeout=8','-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null','-o','LogLevel=ERROR']
+INNER = ['ssh','-o','BatchMode=yes','-o','ConnectTimeout=8','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3','-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null','-o','LogLevel=ERROR']
 
 @dataclass
 class Result:
@@ -27,7 +27,7 @@ class Transport:
     def __init__(self, config):
         self.config = config
         self._lease = None
-        self.base = ['ssh','-o','BatchMode=yes','-S',config.get('socket','/tmp/rhce-trainer-ssh-%C'),'-o','ControlMaster=auto','-o','ControlPersist=2h','-o','ConnectTimeout=12','-o','StrictHostKeyChecking=accept-new','-p',str(config['port']),f"{config['user']}@{config['host']}"]
+        self.base = ['ssh','-o','BatchMode=yes','-S',config.get('socket','/tmp/rhce-trainer-ssh-%C'),'-o','ControlMaster=auto','-o','ControlPersist=2h','-o','ConnectTimeout=12','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=3','-o','StrictHostKeyChecking=accept-new','-p',str(config['port']),f"{config['user']}@{config['host']}"]
     def connect(self):
         options=self.base[:-1];destination=self.base[-1]
         checked=subprocess.run(options+['-O','check',destination],capture_output=True,text=True)

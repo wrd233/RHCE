@@ -106,7 +106,7 @@ def run(numbers,e=None,negative=False):
    state.save('reports/live-q'+str(n)+'-error.json',dict(question=n,error=str(exc)))
    raise
 if __name__=='__main__':
- parser=argparse.ArgumentParser(description='显式现场验收；会保存并恢复全部受管 VM 和控制节点答案')
+ parser=argparse.ArgumentParser(description='显式现场验收；只保存并恢复所选题涉及的 VM 和控制节点答案')
  parser.add_argument('numbers',nargs='+',type=int,choices=range(1,20))
  parser.add_argument('--apply',action='store_true',help='允许在保存现场后进行重置/写入验收答案')
  parser.add_argument('--negative',action='store_true',help='正确提交后，再验证空 playbook 不会得满分')
@@ -116,8 +116,12 @@ if __name__=='__main__':
   from rhce_trainer.transport import NODES
   e=Engine()
   with e.t.lease():
-   # bastion also routes traffic to classroom/content: outer protection must restart it.
-   j=e.save_scene(list(NODES),'acceptance',keep_running=True)
+   for n in args.numbers:e.preflight(question(n))
+   selected={h for n in args.numbers for h in question(n).get('execution_nodes',question(n)['nodes'])}
+   scope=[h for h in NODES if h in selected]
+   # bastion also routes traffic to classroom/content: if selected, restart it.
+   if scope:j=e.save_scene(scope,'acceptance',keep_running=True)
+   else:j=dict(id='rhce-acceptance-'+state.stamp(),kind='acceptance',nodes=[],saved=[],restored=[],backup=e.backup(),phase='ready')
    j['previous_current']=state.load('current.json');state.save('journals/'+j['id']+'.json',j)
    try:run(args.numbers,e,args.negative)
    finally:

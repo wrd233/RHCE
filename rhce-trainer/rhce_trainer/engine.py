@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from . import state
 from .transport import Transport,NODES,VMS,INNER
 from .model import question
+from .archives import validate_answers
 
 BASE='/home/devops/ansible'
 INVENTORY='[dev]\nservera\n[test]\nserverb\n[prod]\nserverc\nserverd\n[balancers]\nbastion\n[webservers:children]\nprod\n'
@@ -61,13 +62,17 @@ class Engine:
         for path in paths:
             self.t.run('test -s '+shlex.quote(path+'-'+label)).require()
         return paths
-    def adopt_baseline(self,label):
-        if state.load('baseline.json'):raise RuntimeError('已有本地基线，拒绝覆盖')
+    def adopt_baseline(self,label,replace=False):
+        previous=state.load('baseline.json')
+        if previous and not replace:raise RuntimeError('已有本地基线；重新核对环境后可显式使用 --replace，旧记录将保留')
         if not re.fullmatch(r'rhce-baseline-[A-Za-z0-9-]+',label):raise ValueError('只接受明确的 rhce-baseline 保存点名称')
         binding=self.identity()
         disks={h:self.snapshot_disks(h,label) for h in NODES}
+        if previous:
+            state.save('previous-binding-'+state.stamp()+'.json',dict(baseline=previous,binding=state.load('binding.json'),current=state.load('current.json')))
         state.save('binding.json',binding)
         state.save('baseline.json',dict(label=label,nodes=list(NODES),identity=binding,disks=disks,adopted=True,created=time.time()))
+        if previous:state.save('current.json',None)
         print('已接管既有命名基线；未修改虚拟机。后续恢复仍会核对全部磁盘。')
     def vm(self,action,h,label=None,start=True):
         if h not in NODES or action not in ('save','restore','reset','start'):raise ValueError('VM 操作不在白名单')
@@ -92,7 +97,7 @@ class Engine:
         p=subprocess.run(self.t.base+[shlex.join(INNER+['root@workstation','tar -C /home/devops -czf - ansible'])],capture_output=True,timeout=300)
         if p.returncode:raise RuntimeError('答案备份失败：'+p.stderr.decode(errors='replace'))
         with tarfile.open(fileobj=io.BytesIO(p.stdout),mode='r:gz') as tar:
-            if not tar.getmembers():raise RuntimeError('答案备份为空')
+            validate_answers(tar)
         dest=state.STATE/'backups'/(state.stamp()+'.tar.gz');dest.write_bytes(p.stdout);dest.chmod(0o600)
         return str(dest)
     def restore_answers(self, backup):
@@ -103,10 +108,7 @@ class Engine:
         if backup:
             data=Path(backup).read_bytes()
             with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive:
-                for member in archive.getmembers():
-                    path=Path(member.name)
-                    if path.is_absolute() or '..' in path.parts or not path.parts or path.parts[0]!='ansible':
-                        raise RuntimeError('答案归档包含越界路径，未覆盖任何文件')
+                validate_answers(archive)
             self.t.ws('install -d -m 700 '+staging+' && tar -xzf - -C '+staging,data).require()
             self.t.ws('test -d '+staging+'/ansible').require()
         else:
@@ -273,6 +275,7 @@ vgs --noheadings --units m -o vg_name,vg_free research
                 if not valid or self.t.node(h,'lvs research/data').rc==0:
                     raise RuntimeError(h+' 的 LVM 前置条件不正确')
     def reset(self,q):
+        print('正在检查第 '+str(q['id'])+' 题的资源并备份答案……',flush=True)
         self.preflight(q)
         backup=self.backup()
         j=self.save_scene(q['nodes'],'reset',q['id']) if q['nodes'] else None

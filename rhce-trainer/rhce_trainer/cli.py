@@ -11,6 +11,7 @@ def main():
  sub.add_parser('list');sub.add_parser('status');sub.add_parser('doctor');sub.add_parser('connect')
  sub.add_parser('init',help='首次从原始镜像建立五个受管节点的命名基线')
  s=sub.add_parser('adopt-baseline',help='迁移电脑后接管明确的已有基线；只读核对 VM 与全部磁盘');s.add_argument('label')
+ s.add_argument('--replace',action='store_true',help='显式切换到已核对的新基线，保留旧身份和基线记录')
  for name in ('show','reset','grade','plan'):
   s=sub.add_parser(name);s.add_argument('number',type=int,choices=range(1,20))
   if name=='grade':
@@ -53,7 +54,7 @@ def main():
    print('将备份现场并恢复：'+', '.join(NODES));return
   with state.locked(), (contextlib.nullcontext() if a.command=='adopt-baseline' else e.t.lease()):
    if a.command=='init':e.init();print('命名基线已创建。')
-   elif a.command=='adopt-baseline':e.adopt_baseline(a.label)
+   elif a.command=='adopt-baseline':e.adopt_baseline(a.label,replace=a.replace)
    elif a.command=='reset':e.reset(question(a.number))
    elif a.command=='recover':
     if '/' in a.journal or '..' in a.journal:raise ValueError('恢复点名称无效')

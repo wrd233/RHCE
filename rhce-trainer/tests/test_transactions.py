@@ -13,6 +13,24 @@ from rhce_trainer.model import question
 from rhce_trainer import state
 
 class Transactions(unittest.TestCase):
+    def test_baseline_replace_validates_before_changing_binding(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)):
+            state.save('baseline.json',{'label':'old'});state.save('binding.json',{'host':'old'})
+            e=Engine();e.identity=Mock(return_value={'host':'new'})
+            e.snapshot_disks=Mock(side_effect=RuntimeError('missing disk'))
+            with self.assertRaises(RuntimeError):e.adopt_baseline('rhce-baseline-new',replace=True)
+            self.assertEqual(state.load('binding.json'),{'host':'old'})
+            self.assertEqual(state.load('baseline.json'),{'label':'old'})
+
+    def test_baseline_replace_preserves_old_identity(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)):
+            state.save('baseline.json',{'label':'old'});state.save('binding.json',{'host':'old'})
+            e=Engine();e.identity=Mock(return_value={'host':'new'});e.snapshot_disks=Mock(return_value=['disk'])
+            e.adopt_baseline('rhce-baseline-new',replace=True)
+            history=list(Path(d).glob('previous-binding-*.json'))
+            self.assertEqual(json.loads(history[0].read_text())['baseline'],{'label':'old'})
+            self.assertEqual(state.load('baseline.json')['label'],'rhce-baseline-new')
+
     def test_failed_preflight_prevents_any_mutation(self):
         e=Engine();e.preflight=Mock(side_effect=RuntimeError('offline'))
         e.backup=Mock();e.save_scene=Mock();e.clear_artifacts=Mock()
@@ -72,6 +90,14 @@ class Transactions(unittest.TestCase):
         g=Grading(Mock(),question(8));g.replay_verified=True
         g.state_check('a','state',10,True,'baseline','read')
         self.assertFalse(g.checks[-1]['passed'])
+
+    def test_other_host_success_cannot_reward_untouched_host(self):
+        g=Grading(Mock(),question(8));g.replay_verified=True;g.run_ok=True
+        g.events=[dict(host='serverc',status='ok')]
+        g.state_check('serverd.firewall','existing state',5,True,{'active':True},'read')
+        self.assertFalse(g.checks[-1]['passed'])
+        g.state_check('serverc.firewall','actual participant',5,True,{'active':True},'read')
+        self.assertTrue(g.checks[-1]['passed'])
 
     def test_mux_refusal_retries_only_before_execution(self):
         from rhce_trainer.transport import Transport

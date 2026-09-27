@@ -1,23 +1,34 @@
 # RHCE 9 逐题练习工具
 
-程序在 Mac 本地运行，通过 f0 转入 KVM 虚拟机。核心程序不装在 workstation，重建虚拟机不会删除工具。题源为用户的《RHCE9.0模拟题新版(答案).pdf》，已接入 19 道题的定义与评分函数；现场验收尚未全部完成，覆盖进度见 `docs/validation.md`。
+程序在 Mac 本地运行，通过 f0 转入 KVM 虚拟机。核心程序不装在 workstation，重建虚拟机不会删除工具。题源为用户的《RHCE9.0模拟题新版(答案).pdf》，v0.1.0 已接入全部 19 道题的题面、依赖准备、reset 和评分函数。11 道题已有实机满分记录，其余验收范围和限制见 [验收记录](docs/validation.md)。
 
 ## 安装与连接
 
 需要 Python 3.9+、系统 OpenSSH。无需第三方 Python 库即可执行多数命令；16/17/18 的敏感题面值需 `pdfplumber`，会自动使用本机 Codex 附带的 Python（也可在自己的 Python 安装该库）。
 
 ```sh
-cd /Users/wangrundong/work/红帽RHCE/rhce-trainer
+cd /你的项目目录/rhce-trainer
 ./rhce list
 ./rhce connect
 ```
 
 `connect` 通过终端输入 SSH 密码，不存储密码。默认连接 `root@rhce.lab0.cn:9007`，使用 OpenSSH 连接复用。新终端断线后重跑 connect。可用 `python3 -m pip install --user .` 安装为 `rhce`，或将本目录加入 PATH。
 
+普通电脑推荐在虚拟环境安装完整版本（包含密码题所需 PDF 读取库）：
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install '.[pdf]'
+rhce list
+rhce connect
+rhce doctor
+```
+
 连接及 PDF 路径可保存到 `~/.local/state/rhce-trainer/connection.json`，只支持非秘密信息，例如：
 
 ```json
-{"host":"rhce.lab0.cn","port":9007,"user":"root","pdf":"/Users/wangrundong/Downloads/RHCE9.0模拟题新版(答案).pdf"}
+{"host":"rhce.lab0.cn","port":9007,"user":"root","pdf":"/你的资料目录/RHCE9.0模拟题新版(答案).pdf"}
 ```
 
 直接从源码运行时会自动寻找项目旁的 RHCE9.0 PDF；安装为独立包后，应在 connection.json 指定 PDF 路径。
@@ -45,6 +56,8 @@ rhce doctor
 
 `reset N` 会先备份答案、保存相关 VM 的整个现场，再恢复这些 VM 的已验证命名基线，准备依赖并移走本题产物。它会重置**相关 VM 的全部状态**，不只删除本题文件；不相关 VM 不动。旧答案还在本地备份和 workstation 的 `.rhce-trainer-retired` 中。不进行无备份的磁盘擦除。
 
+重置和评分都可能耗时数分钟：官方 VM 启动流程结束后才开始操作，评分还需要恢复原现场。请等命令退出后再编辑答案或运行下一条操作。
+
 第 10 题自动准备 research 卷组：a/b 可以容纳 600 MiB，c/d 只能完成 400 MiB，bastion 没有该卷组。第 11 题从空数据盘开始，与第 10 题隔离。第 9 题建立需要的网页及角色前提，第 17 题准备加密密码库。依赖图和题目产物在 `rhce_trainer/questions.json`。
 
 ## 首次初始化、恢复与中断
@@ -63,11 +76,11 @@ rhce recover <status 中的恢复点名称> --with-answers
 如果迁移了电脑或丢失本地状态，但原有基线仍在 f0，可使用明确的名称接管：
 
 ```sh
-rhce adopt-baseline rhce-baseline-20260926113655-e97f35
+rhce adopt-baseline rhce-baseline-20260926225159-5dbbe3
 rhce doctor
 ```
 
-上面的名称是本次环境实际发现的保存点，不能照搬到其他环境。接管只读取身份和每台 VM 的全部磁盘保存点，再写本地绑定；不会重置 VM，也不等于重新验证保存点内容。已有本地基线时拒绝覆盖。
+上面的名称是本次环境实际发现的保存点，不能照搬到其他环境。接管只读取身份和每台 VM 的全部磁盘保存点，再写本地绑定；不会重置 VM，也不等于重新验证保存点内容。已有本地基线时默认拒绝覆盖。若环境已经重建，先核对新保存点和 VM 身份，再显式执行 `rhce adopt-baseline <新保存点名称> --replace`。只有全部磁盘检查成功后才会切换绑定；旧身份、基线和练习状态保留在本地 `previous-binding-*.json`。
 
 `recover` 恢复该操作保存的 VM 现场。控制节点答案归档在 `~/.local/state/rhce-trainer/backups`，默认不随 recover 覆盖；显式加入 `--with-answers` 可一并恢复答案，当前文件会移到 retired 目录保留。reset 自身失败时自动回滚本次答案修改。可先把 tar.gz 解压到本地临时目录查看，按需单文件还原。
 
@@ -117,6 +130,6 @@ python3 -m unittest discover -s tests -v
 python3 tests/live_cases.py --apply 13 8 10
 ```
 
-验收脚本会保存五台受管 VM 和控制节点答案，逐题 reset、写入测试提交、grade，最后恢复原 VM 及答案；测试提交留在 `.rhce-trainer-retired` 供排查。未传 `--apply` 会拒绝运行。追加 `--negative` 会先建立正确系统状态，再换成空 playbook，验证旧状态不会被误判为满分。基础设施或恢复错误必须先处理，不能当作学生未得分。
+验收脚本会保存所选题实际涉及的受管 VM 和控制节点答案，逐题 reset、写入测试提交、grade，最后恢复原 VM 及答案；测试提交留在 `.rhce-trainer-retired` 供排查。未传 `--apply` 会拒绝运行。追加 `--negative` 会先建立正确系统状态，再换成空 playbook，验证旧状态不会被误判为满分。基础设施或恢复错误必须先处理，不能当作学生未得分。
 
 扩展题目：在 questions.json 定义要求、依赖、产物、影响节点，在 engine.py 加准备步骤，在 graders.py 注册独立评分函数；权重必须合计 100，并增加正反例验证。

@@ -41,7 +41,7 @@ class Environments(unittest.TestCase):
         e=Mock();p=Prerequisites(e)
         seen=[]
         p.check=Mock(side_effect=lambda n: seen.count(n)>0)
-        p.complete=Mock(side_effect=lambda n: seen.append(n))
+        p.complete=Mock(side_effect=lambda n,limit: seen.append(n))
         p.ensure(question(9))
         self.assertEqual(seen,[1,2,3,6,7,8])
         self.assertEqual([c.args[0] for c in p.complete.call_args_list],seen)
@@ -57,6 +57,25 @@ class Environments(unittest.TestCase):
             self.fail(command)
         e.t.node.side_effect=node
         self.assertTrue(p.check(3))
+
+    def test_completed_prerequisites_reduce_reset_scope_to_target(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)):
+            e=Engine();e.preflight=Mock();e.backup=Mock(return_value='answers.tar.gz')
+            journal=dict(id='sample',nodes=['servera'],saved=['servera'],restored=[])
+            e.save_scene=Mock(return_value=journal);e.baseline=Mock()
+            e.clear_artifacts=Mock();e.prepare=Mock();e.verify_ready=Mock()
+            with patch('rhce_trainer.prerequisites.Prerequisites.check',return_value=True),patch('rhce_trainer.prerequisites.Prerequisites.ensure') as ensure:
+                e.reset(question(11))
+            self.assertEqual(e.save_scene.call_args.args[0],['servera'])
+            self.assertEqual(e.baseline.call_args.args[0],['servera'])
+            self.assertEqual(ensure.call_args.kwargs['limit'],['servera'])
+
+    def test_limited_prerequisite_replay_mutates_only_target_nodes(self):
+        e=Mock();p=Prerequisites(e)
+        p.check=Mock(side_effect=[True,False,True,True])
+        p.complete=Mock()
+        p.ensure(question(11),limit=['servera'])
+        p.complete.assert_called_once_with(2,['servera'])
 
     def test_reset_prerequisite_failure_restores_every_saved_vm_and_answers(self):
         from rhce_trainer.transport import NODES

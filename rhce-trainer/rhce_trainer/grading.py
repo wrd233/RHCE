@@ -16,6 +16,22 @@ FAST_UNVERIFIED={
     11:{'missing-vdd','fallback'},12:{'template'},13:{'all-hosts'},15:{'download'},
 }
 
+# Fast mode observes only the data consumed by that question's checkpoints.
+# Full grading retains the complete inspection for replay evidence.
+FAST_OBSERVATIONS={
+    2:dict(repos=True),
+    4:dict(files=['/etc/chrony.conf'],commands=['chrony','ntp']),
+    5:dict(files=['/etc/selinux/config'],commands=['selinux']),
+    8:dict(commands=['packages','httpd_active','httpd_enabled','firewall_active','firewall_enabled','firewall_http','firewall_http_permanent','firewall_ports','firewall_ports_permanent']),
+    10:dict(commands=['lv']),
+    11:dict(commands=['block']),
+    12:dict(files=['/etc/myhosts']),
+    13:dict(files=['/etc/issue']),
+    14:dict(files=['/webdev','/webdev/index.html','/var/www/html/webdev']),
+    15:dict(files=['/root/hwreport.txt'],commands=['block','bios','memory']),
+    19:dict(commands=['cron']),
+}
+
 class Grading:
     def __init__(self,e,q,profile=None,fast=False):
         self.fast=fast
@@ -83,7 +99,10 @@ print(json.dumps(out))'''
         self.t.ws('python3 -B -c '+shlex.quote(code)+' '+shlex.quote(self.run_directory)).require()
     def observe(self):
         script=(ROOT/'remote/inspect.py').read_bytes()
-        def one(h):return h,json.loads(self.t.node(h,'python3 -B -'+(' --fast' if self.fast else ''),script,timeout=240).require())
+        profile=FAST_OBSERVATIONS.get(self.q['id']) if self.fast else None
+        if self.fast and profile is None:return
+        command='python3 -B -'+(' --fast '+shlex.quote(json.dumps(profile)) if self.fast else '')
+        def one(h):return h,json.loads(self.t.node(h,command,script,timeout=240).require())
         with ThreadPoolExecutor(max_workers=5) as pool:self.obs=dict(pool.map(one,self.q['nodes']))
     def out(self,h,key):return self.obs[h]['commands'][key]['out']
     def file(self,h,p):return self.obs[h]['files'][p]
@@ -146,7 +165,7 @@ print(json.dumps(out))'''
         if self.q['playbook']:
             self.add('execution','以 devops 从正确基线执行成功',20,None,
                      {'reason':'快速检查不执行提交，也不验证重放'},'fresh replay required')
-            self.observe()
+            if self.q['id'] in FAST_OBSERVATIONS:self.observe()
             managed(self)
         elif self.q['id']==1:
             fast_config(self)

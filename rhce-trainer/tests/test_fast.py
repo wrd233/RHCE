@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock,patch
 from rhce_trainer import state
-from rhce_trainer.grading import Grading,FAST_UNVERIFIED
+from rhce_trainer.grading import Grading,FAST_UNVERIFIED,FAST_OBSERVATIONS
 from rhce_trainer.model import question,checkpoint,report
 from rhce_trainer.transport import Result
 from rhce_trainer.graders import MANAGED
@@ -56,6 +56,16 @@ class FastTests(unittest.TestCase):
         g.obs['servera']['files']['/etc/issue']['text']='typo';g.checks=[]
         r=g.grade();self.assertEqual((r['score'],r['maximum']),(55,75))
         self.assertEqual(r['counts']['FAIL'],1)
+
+    def test_fast_observation_only_requests_question_fields(self):
+        g=self.grader(11);g.observe=Grading.observe.__get__(g,Grading)
+        g.t.node.return_value=Result(0,json.dumps({'commands':{'block':{'out':'{}'}},'files':{},'repos':[]}), '')
+        g.observe()
+        command=g.t.node.call_args.args[1]
+        self.assertIn('"block"',command)
+        self.assertNotIn('httpd_active',command)
+        self.assertEqual(FAST_OBSERVATIONS[11],{'commands':['block']})
+        g=self.grader(9);g.grade();g.observe.assert_not_called()
 
     def test_no_verifiable_items_has_no_percentage(self):
         r=report(question(1),[checkpoint('x','x',100,None,{},'events')],mode='fast')

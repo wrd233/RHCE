@@ -14,9 +14,11 @@ class Prerequisites:
 
     def _file(self,path):return self.t.ws('test -e '+shlex.quote(BASE+'/'+path)).rc==0
 
-    def _playbook(self,name,plays):
+    def _playbook(self,name,plays,limit=None):
         self.t.put(BASE+'/'+name,json.dumps(plays,ensure_ascii=False,indent=2)+'\n')
-        self.t.dev('ansible-playbook '+shlex.quote(name),timeout=1800).require()
+        command='ansible-playbook '+shlex.quote(name)
+        if limit:command+=' --limit '+shlex.quote(','.join(limit))
+        self.t.dev(command,timeout=1800).require()
 
     def check(self,n):
         from .grading import Grading
@@ -78,7 +80,7 @@ print(json.dumps(ok))'''
             return all(c['passed'] for c in g.checks)
         raise RuntimeError('尚无第 '+str(n)+' 题的自动前置完成器')
 
-    def complete(self,n):
+    def complete(self,n,limit=None):
         q=question(n)
         self.e.clear_artifacts(q)
         if n==1:
@@ -88,9 +90,9 @@ print(json.dumps(ok))'''
             tasks=[]
             for name,word,folder in [('rh294_BASE','base','BaseOS'),('rh294_STREAM','stream','AppStream')]:
                 tasks.append({'ansible.builtin.yum_repository':dict(name=name,description='rh294 '+word+' software',baseurl='http://content.example.com/rhel9.0/x86_64/dvd/'+folder,enabled=True,gpgcheck=True,gpgkey='http://content.example.com/rhel9.0/x86_64/dvd/RPM-GPG-KEY-redhat-release')})
-            self._playbook('yum_repo.yml',[dict(hosts='all',tasks=tasks)])
+            self._playbook('yum_repo.yml',[dict(hosts='all',tasks=tasks)],limit)
         elif n==3:
-            self._playbook('packages.yml',[dict(hosts='dev:test:prod',tasks=[{'ansible.builtin.dnf':dict(name=['php','mariadb'],state='present')}]),dict(hosts='dev',tasks=[{'ansible.builtin.dnf':dict(name='@Development Tools',state='present')},{'ansible.builtin.dnf':dict(name='*',state='latest')}])])
+            self._playbook('packages.yml',[dict(hosts='dev:test:prod',tasks=[{'ansible.builtin.dnf':dict(name=['php','mariadb'],state='present')}]),dict(hosts='dev',tasks=[{'ansible.builtin.dnf':dict(name='@Development Tools',state='present')},{'ansible.builtin.dnf':dict(name='*',state='latest')}])],limit)
         elif n==6:
             self.t.put(BASE+'/roles/requirements.yml','- name: balancer\n  src: http://classroom.example.com/content/haproxy.tar.gz\n- name: phpinfo\n  src: http://classroom.example.com/content/phpinfo.tar.gz\n')
             self.t.dev('ansible-galaxy role install -r roles/requirements.yml -p roles --force').require()
@@ -103,7 +105,7 @@ print(json.dumps(ok))'''
                 {'ansible.builtin.template':dict(src='index.html.j2',dest='/var/www/html/index.html')}
             ],indent=2)+'\n')
             self.t.put(BASE+'/roles/apache/templates/index.html.j2','Welcome to {{ ansible_fqdn }} on {{ ansible_default_ipv4.address }}\n')
-            self._playbook('newrole.yml',[dict(hosts='webservers',roles=['apache'])])
+            self._playbook('newrole.yml',[dict(hosts='webservers',roles=['apache'])],limit)
         elif n==16:
             from .secrets import secrets
             s=secrets(self.e.config)
@@ -112,12 +114,14 @@ print(json.dumps(ok))'''
             self.t.dev('ansible-vault encrypt --vault-password-file secret.txt locker.yml').require()
         else:raise RuntimeError('尚无第 '+str(n)+' 题的自动前置完成器')
 
-    def ensure(self,q):
+    def ensure(self,q,limit=None):
         for n in dependency_order(q['id']):
             if self.check(n):
                 print('前置第 '+str(n)+' 题：已完成',flush=True)
                 continue
+            if limit is not None and n not in (2,3,8):
+                raise RuntimeError('前置第 '+str(n)+' 题在轻量重置期间意外失效，已停止并恢复现场')
             print('前置第 '+str(n)+' 题：缺失，正在补做并验证……',flush=True)
-            self.complete(n)
+            self.complete(n,limit)
             if not self.check(n):raise RuntimeError('前置第 '+str(n)+' 题补做后验证失败：'+json.dumps(self.details.get(n,{}),ensure_ascii=False))
             print('前置第 '+str(n)+' 题：已补做并验证',flush=True)

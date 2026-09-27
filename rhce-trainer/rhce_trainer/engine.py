@@ -286,10 +286,16 @@ vgs --noheadings --units m -o vg_name,vg_free research
                     raise RuntimeError(h+' 的 LVM 前置条件不正确')
     def reset(self,q):
         from .prerequisites import Prerequisites,reset_nodes
-        scope=reset_nodes(q)
+        from .model import dependency_order
+        full_scope=reset_nodes(q)
         print('正在检查第 '+str(q['id'])+' 题的资源并备份答案……',flush=True)
         self.preflight(q)
+        prerequisites=Prerequisites(self)
+        warm=(set(full_scope)>set(q['nodes']) and
+              all(prerequisites.check(n) for n in dependency_order(q['id'])))
+        scope=list(q['nodes']) if warm else full_scope
         backup=self.backup()
+        if warm:print('前置题当前均已完成；只保存并重置本题节点。',flush=True)
         print('本次保存和恢复的受管节点：'+(', '.join(scope) if scope else '无'),flush=True)
         j=self.save_scene(scope,'reset',q['id'],backup=backup) if scope else None
         if j is None:
@@ -298,7 +304,7 @@ vgs --noheadings --units m -o vg_name,vg_free research
         try:
             j['phase']='preparing';state.save('journals/'+j['id']+'.json',j)
             if scope:self.baseline(scope)
-            Prerequisites(self).ensure(q)
+            prerequisites.ensure(q,limit=scope if warm else None)
             self.clear_artifacts(q);self.prepare(q,prerequisites_ready=True);self.verify_ready(q)
         except BaseException:
             failures=[]

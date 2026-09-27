@@ -101,7 +101,10 @@ p.write_bytes(base64.b64decode(d['content'])); os.chown(p,u.pw_uid,u.pw_gid); os
         deadline=time.monotonic()+seconds
         while time.monotonic()<deadline:
             try:
-                ready='test "$(hostname -f)" = '+shlex.quote(host+'.lab.example.com')+' && systemctl is-active --quiet multi-user.target'
+                # The lab's rc.local may wait forever for a missing bastion /rht
+                # endpoint, leaving multi-user.target inactive after SSH is usable.
+                # Check the services needed by remote operations instead.
+                ready='test "$(hostname -f)" = '+shlex.quote(host+'.lab.example.com')+' && systemctl is-active --quiet sshd.service && systemctl is-active --quiet local-fs.target'
                 r=self.ws(ready,timeout=20) if host=='workstation' else self.node(host,ready,timeout=25)
                 if r.rc==0:return
             except subprocess.TimeoutExpired:pass

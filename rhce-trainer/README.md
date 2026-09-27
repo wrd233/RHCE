@@ -9,10 +9,14 @@
 ```sh
 cd /你的项目目录/rhce-trainer
 ./rhce list
+./rhce environments
+./rhce use CE-03
 ./rhce connect
 ```
 
-`connect` 通过终端输入 SSH 密码，不存储密码。默认连接 `root@rhce.lab0.cn:9007`，使用 OpenSSH 连接复用。新终端断线后重跑 connect。可用 `python3 -m pip install --user .` 安装为 `rhce`，或将本目录加入 PATH。
+首次使用必须先用 `rhce use CE-01` 至 `CE-05` 选择环境；没有默认 CE。端口依次为 9005、9006、9007、9008、9009。`connect` 对当前 CE 通过终端输入 SSH 密码，不存储密码，使用 OpenSSH 连接复用。`rhce --ce CE-04 status` 可临时指定环境而不改变已选环境；全局 `--ce` 写在子命令前。新终端断线后重跑 connect。可用 `python3 -m pip install --user .` 安装为 `rhce`，或将本目录加入 PATH。
+
+每个 CE 的绑定、基线、答案备份和评分报告分开保存。首次选择 CE-03 时，工具将原有单环境状态复制到 CE-03 目录并保留原件；其他 CE 不继承 CE-03 的基线。切换到尚未建立基线的 CE 后，先运行 `rhce doctor` 核对身份，再按实际情况使用 `init` 或 `adopt-baseline`。切换环境本身不会连接或重置虚拟机。
 
 普通电脑推荐在虚拟环境安装完整版本（包含密码题所需 PDF 读取库）：
 
@@ -21,14 +25,15 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install '.[pdf]'
 rhce list
+rhce use CE-03
 rhce connect
 rhce doctor
 ```
 
-连接及 PDF 路径可保存到 `~/.local/state/rhce-trainer/connection.json`，只支持非秘密信息，例如：
+各 CE 的 PDF 路径可保存到 `~/.local/state/rhce-trainer/environments/ce-03/connection.json` 等对应目录，只支持非秘密信息。连接主机、端口和账户由所选 CE 固定，不会被配置文件覆盖。例如：
 
 ```json
-{"host":"rhce.lab0.cn","port":9007,"user":"root","pdf":"/你的资料目录/RHCE9.0模拟题新版(答案).pdf"}
+{"pdf":"/你的资料目录/RHCE9.0模拟题新版(答案).pdf"}
 ```
 
 直接从源码运行时会自动寻找项目旁的 RHCE9.0 PDF；安装为独立包后，应在 connection.json 指定 PDF 路径。
@@ -54,7 +59,7 @@ rhce doctor
 
 `plan N` 和 `reset N --dry-run` 可离线查看完整依赖顺序、重置 VM 范围和评分 VM 范围。第 12 题仅重置 servera，但为收集全部主机事实，评分会临时保存、恢复五台受管节点。
 
-`reset N` 会先备份答案、保存相关 VM 的整个现场，再恢复这些 VM 的已验证命名基线，准备依赖并移走本题产物。它会重置**相关 VM 的全部状态**，不只删除本题文件；不相关 VM 不动。旧答案还在本地备份和 workstation 的 `.rhce-trainer-retired` 中。不进行无备份的磁盘擦除。
+`reset N` 会先备份答案、保存目标和全部前置题涉及的 VM 现场，再将范围内 VM 恢复到该 CE 的已验证命名基线。之后按依赖顺序检查并补齐前置题的提交文件和目标状态，最后移走本题产物。它会重置**范围内 VM 的全部状态**，不只删除本题文件；具体范围用 `rhce reset N --dry-run` 查看。例如第 11 题为完整补齐第 2 题，会涉及全部五台受管节点。旧答案保留在本地备份和 workstation 的 `.rhce-trainer-retired` 中；补做前置题若需替换旧提交，也会先移走旧文件。不进行无备份的磁盘擦除。
 
 重置和评分都可能耗时数分钟：官方 VM 启动流程结束后才开始操作，评分还需要恢复原现场。请等命令退出后再编辑答案或运行下一条操作。
 
@@ -62,7 +67,7 @@ rhce doctor
 
 ## 首次初始化、恢复与中断
 
-`rhce init` 是首次初始化操作：只处理五个受管节点，从官方原始 VM 镜像恢复，设置考试公共前提，并用官方 `rht-vmctl save` 保存命名基线。若发现已有保存点则停止，避免把用户最新保存点当成原始镜像。已有基线时，普通 init 拒绝运行；需要补齐公共准备可显式使用 `rhce init --prepare`，详见下文。
+`rhce init` 是首次初始化操作：只处理五个受管节点，从官方原始 VM 镜像恢复，设置考试公共前提，并用官方 `rht-vmctl save` 保存命名基线。若发现已有保存点则停止，避免把用户最新保存点当成原始镜像。已有基线时，普通 init 拒绝运行；需要补齐公共准备可显式使用 `rhce init --prepare`，详见下文。若公共准备报告已通过、基线保存因中断只完成了一部分，可用 `rhce init --resume <本次明确输出的基线名称>` 校验已有磁盘副本并续存；不得重新执行普通 init。
 
 ```sh
 rhce restore-lab --dry-run
@@ -82,7 +87,7 @@ rhce doctor
 
 上面的名称是本次环境实际发现的保存点，不能照搬到其他环境。接管只读取身份和每台 VM 的全部磁盘保存点，再写本地绑定；不会重置 VM，也不等于重新验证保存点内容。已有本地基线时默认拒绝覆盖。若环境已经重建，先核对新保存点和 VM 身份，再显式执行 `rhce adopt-baseline <新保存点名称> --replace`。只有全部磁盘检查成功后才会切换绑定；旧身份、基线和练习状态保留在本地 `previous-binding-*.json`。
 
-`recover` 恢复该操作保存的 VM 现场。控制节点答案归档在 `~/.local/state/rhce-trainer/backups`，默认不随 recover 覆盖；显式加入 `--with-answers` 可一并恢复答案，当前文件会移到 retired 目录保留。reset 自身失败时自动回滚本次答案修改。可先把 tar.gz 解压到本地临时目录查看，按需单文件还原。
+`recover` 恢复该操作保存的 VM 现场。控制节点答案归档在所选 CE 的 `~/.local/state/rhce-trainer/environments/ce-xx/backups`，默认不随 recover 覆盖；显式加入 `--with-answers` 可一并恢复答案，当前文件会移到 retired 目录保留。reset 自身失败时自动回滚本次答案修改。可先把 tar.gz 解压到本地临时目录查看，按需单文件还原。恢复时务必选择创建恢复点的同一个 CE。
 
 ## 评分原则
 
@@ -96,13 +101,13 @@ rhce doctor
 
 因此手工 SSH 改对状态、空 playbook、只留下上次成功结果不能替代可重放的答案。角色和模板既检查产物也检查实际执行事件；不要求 YAML 与参考答案逐字相同。控制节点题直接验证有效配置、Galaxy 空目录安装、集合文件完整性、Vault 解密/内容保持。
 
-每个检查点含 id、描述、权重、检查方式、PASS/FAIL 和证据。已完成可靠基线重放后，即使某台主机执行失败，其他已满足要求的分项仍可得分；运行失败独立扣除执行分。总分 100。基础设施无法恢复、依赖无法建立、无法采集时报告 ERROR，不冒充学生答案得分。退出码：0=满分/命令成功，1=未满分，2=环境/工具错误，130=中断。JSON 报告在 `~/.local/state/rhce-trainer/reports`。
+每个检查点含 id、描述、权重、检查方式、PASS/FAIL 和证据。已完成可靠基线重放后，即使某台主机执行失败，其他已满足要求的分项仍可得分；运行失败独立扣除执行分。总分 100。基础设施无法恢复、依赖无法建立、无法采集时报告 ERROR，不冒充学生答案得分。退出码：0=满分/命令成功，1=未满分，2=环境/工具错误，130=中断。JSON 报告在所选 CE 的 `environments/ce-xx/reports`。
 
 ## 题面冲突及覆盖边界
 
 详见 `docs/analysis.md`，实际验收进度见 `docs/validation.md`。
 
-- 第 12 题题面 IP 与环境冲突，默认按题面 172.25.254.10–13；`rhce grade 12 --profile live` 显式改按实际 172.25.250.10–13。报告记录模式。
+- 第 12 题题面 IP 与环境冲突，默认按已核对的实验地址 172.25.250.10–13；`rhce grade 12 --profile pdf` 可显式按题面示例 172.25.254.10–13 检查。bastion 应使用面向受管节点的 172.25.250.254，不能直接取其默认路由网卡地址。报告记录模式。
 - 第 13/14 题必须是 Development，不接受答案中的错拼 Devlopment。
 - 第 5 题题面缺文件名，工具约定 selinux.yml。
 - 第 11 题覆盖真实基线的 vdd 缺失、vdb=1 GiB 回退场景；不声称验证不存在的大盘分支。

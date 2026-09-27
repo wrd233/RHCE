@@ -17,9 +17,9 @@ FAST_UNVERIFIED={
 }
 
 class Grading:
-    def __init__(self,e,q,profile='pdf',fast=False):
+    def __init__(self,e,q,profile=None,fast=False):
         self.fast=fast
-        self.e=e;self.t=e.t;self.q=q;self.profile=profile;self.checks=[];self.events=[];self.obs={};self.run_ok=False;self.run_result=None;self.run_directory=None;self.replay_verified=False
+        self.e=e;self.t=e.t;self.q=q;self.profile=profile or ('live' if q['id']==12 else 'pdf');self.checks=[];self.events=[];self.obs={};self.run_ok=False;self.run_result=None;self.run_directory=None;self.replay_verified=False
     def add(self,id,desc,weight,ok,evidence,check):
         if self.fast and id in FAST_UNVERIFIED.get(self.q['id'],set()):
             ok=None;evidence={'reason':'需要重放、执行事件或可能写入环境的检查；快速模式未验证'}

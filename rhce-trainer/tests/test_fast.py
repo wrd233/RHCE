@@ -82,7 +82,7 @@ class FastTests(unittest.TestCase):
 
     def test_cli_fast_does_not_take_remote_write_lock(self):
         from rhce_trainer.cli import main
-        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)),patch('rhce_trainer.cli.Engine') as engine,patch('rhce_trainer.cli.Grading') as grading,patch('sys.argv',['rhce','grade','13','--fast','--json']):
+        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)),patch('rhce_trainer.cli.state.activate_ce'),patch('rhce_trainer.cli.Engine') as engine,patch('rhce_trainer.cli.Grading') as grading,patch('sys.argv',['rhce','--ce','CE-03','grade','13','--fast','--json']):
             state.setup()
             grading.return_value.grade.return_value=report(question(13),[checkpoint('x','event',100,None,{},'event')],mode='fast')
             output=io.StringIO()
@@ -93,7 +93,7 @@ class FastTests(unittest.TestCase):
 
     def test_cli_full_still_uses_lease_and_full_grader(self):
         from rhce_trainer.cli import main
-        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)),patch('rhce_trainer.cli.Engine') as engine,patch('rhce_trainer.cli.Grading') as grading,patch('sys.argv',['rhce','grade','13','--json']):
+        with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)),patch('rhce_trainer.cli.state.activate_ce'),patch('rhce_trainer.cli.Engine') as engine,patch('rhce_trainer.cli.Grading') as grading,patch('sys.argv',['rhce','--ce','CE-03','grade','13','--json']):
             state.setup();engine.return_value.t.lease.return_value=contextlib.nullcontext()
             grading.return_value.grade.return_value=report(question(13),[checkpoint('x','state',100,True,{},'state')])
             with contextlib.redirect_stdout(io.StringIO()):main()

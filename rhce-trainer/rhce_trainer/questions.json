@@ -397,7 +397,7 @@
       "hosts.yml"
     ],
     "playbook": "hosts.yml",
-    "question": "创建 hosts.j2 模板，hosts.yml 在 dev 生成 /etc/myhosts，含 localhost IPv4/IPv6 两行及全部五个受管节点的 IP、FQDN、短名，顺序不限。题面示例 a–d 为 172.25.254.10–13，与首页/实际 IP 冲突；默认按题面字面评分，可显式选择 live 配置。",
+    "question": "创建 hosts.j2 模板，hosts.yml 在 dev 生成 /etc/myhosts，含 localhost IPv4/IPv6 两行及全部五个受管节点的 IP、FQDN、短名，顺序不限。题面示例 a–d 为 172.25.254.10–13，与首页、验证输出及实际 IP 冲突；默认按当前实验地址评分，可显式选择 pdf 示例配置。",
     "base": "/home/devops/ansible",
     "reset_strategy": "备份控制节点答案；仅恢复指定受管 VM 到已验证基线；准备非考点依赖；移走本题产物",
     "touched_resources": [

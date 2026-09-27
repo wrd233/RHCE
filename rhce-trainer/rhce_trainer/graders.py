@@ -76,8 +76,8 @@ def packages(g):
         g.add('development-tools','dev 安装 Development Tools 组',15,None,{},'dnf group list')
         g.add('latest','dev 所有包为仓库可用最新版本',15,None,{},'dnf check-update')
         return
-    r=g.t.node('servera','LC_ALL=C dnf -q group list --installed --hidden',timeout=180)
-    g.state_check('development-tools','dev 安装 Development Tools 组',15,r.rc==0 and 'Development Tools' in r.out,r.out,'dnf group list --installed --hidden')
+    r=g.t.node('servera','LC_ALL=C dnf -q group list --installed',timeout=180)
+    g.state_check('development-tools','dev 安装 Development Tools 组',15,r.rc==0 and 'Development Tools' in r.out,r.out,'dnf group list --installed')
     r=g.t.node('servera','dnf -q check-update',timeout=300)
     g.state_check('latest','dev 所有包为仓库可用最新版本',15,r.rc==0,{'rc':r.rc,'updates':r.out[-3000:]},'dnf check-update (0=no update,100=updates,other=error)')
 MANAGED[3]=packages

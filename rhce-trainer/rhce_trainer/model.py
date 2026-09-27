@@ -22,10 +22,11 @@ def dependency_order(n):
 
 def plan(n):
     q=question(n)
+    from .prerequisites import reset_nodes
     return dict(q,prerequisite_order=dependency_order(n),
-                reset_vm_scope=q['nodes'],
+                reset_vm_scope=reset_nodes(q),
                 grade_vm_scope=q.get('execution_nodes',q['nodes']),
-                reset_effect='范围内 VM 的全部状态恢复命名基线；原现场保留恢复点，控制节点答案先备份',
+                reset_effect='目标与前置题涉及的 VM 恢复命名基线；补齐前置题提交文件和目标状态；原现场保留恢复点，控制节点答案先备份',
                 grade_effect='保存现场 → 基线 → 准备依赖 → 运行学生提交 → 逐项评分 → 恢复现场')
 
 def checkpoint(id,description,weight,passed,evidence,check):

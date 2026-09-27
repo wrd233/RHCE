@@ -25,8 +25,12 @@ class Engine:
     def __init__(self):
         state.setup()
         pdf=next(Path(__file__).resolve().parents[2].glob('RHCE9.0*.pdf'),None)
-        self.config=dict(host='rhce.lab0.cn',port=9007,user='root',pdf=str(pdf) if pdf else '')
+        self.config=dict(host='rhce.lab0.cn',port=0,user='root',pdf=str(pdf) if pdf else '')
         self.config.update(state.load('connection.json',{}))
+        ce=state.active_ce()
+        if ce:
+            # A copied legacy connection file must never redirect another CE.
+            self.config.update(host='rhce.lab0.cn',port=state.CE_PORTS[ce],user='root')
         self.t=Transport(self.config)
     def identity(self):
         host=self.t.run('hostname').require().strip()
@@ -83,7 +87,7 @@ class Engine:
         r=self.t.run(cmd,timeout=300)
         if r.rc or 'Error:' in r.out:raise RuntimeError(r.out+r.err)
         if action in ('save','restore'):
-            if self.t.run('virsh domstate '+h).require().strip()!='shut off':
+            if self.t.run('LC_ALL=C virsh domstate '+h).require().strip()!='shut off':
                 raise RuntimeError('磁盘校验前 VM 未停止：'+h)
             for path in self.snapshot_disks(h,label):
                 self.t.run('cmp -s '+shlex.quote(path)+' '+shlex.quote(path+'-'+label),timeout=300).require()
@@ -119,10 +123,10 @@ class Engine:
         command+='rmdir '+staging
         self.t.ws(command).require()
         return retired
-    def save_scene(self,nodes,kind,qid=None,keep_running=False):
+    def save_scene(self,nodes,kind,qid=None,keep_running=False,backup=None):
         self.guard(nodes)
         tag='rhce-'+kind+'-'+state.stamp()
-        journal=dict(id=tag,kind=kind,question=qid,nodes=nodes,saved=[],restored=[],phase='saving',backup=self.backup())
+        journal=dict(id=tag,kind=kind,question=qid,nodes=nodes,saved=[],restored=[],phase='saving',backup=backup if backup is not None else self.backup())
         state.save('journals/'+tag+'.json',journal)
         with ThreadPoolExecutor(max_workers=5) as pool:
             jobs={pool.submit(self.vm,'save',h,tag,keep_running):h for h in nodes}
@@ -137,7 +141,7 @@ class Engine:
             # Saving stops VMs; bring every attempted VM back without changing its disks.
             for h in nodes:
                 try:
-                    if self.t.run('virsh domstate '+h).require().strip()!='running':self.vm('start',h)
+                    if self.t.run('LC_ALL=C virsh domstate '+h).require().strip()!='running':self.vm('start',h)
                 except Exception as exc:errors.append('启动 '+h+': '+str(exc))
             raise RuntimeError('现场保存不完整，未恢复基线：'+'; '.join(errors))
         journal['phase']='ready';state.save('journals/'+tag+'.json',journal)
@@ -206,23 +210,29 @@ print(json.dumps(out))'''
     def collections(self):
         for name in ('ansible-posix-1.5.1','community-general-6.3.0'):
             self.t.dev('ansible-galaxy collection install http://content.example.com/'+name+'.tar.gz -p mycollections').require()
-    def prepare(self,q,grading=False):
+    def prepare(self,q,grading=False,prerequisites_ready=False):
         n=q['id'];nodes=q['nodes']
         # During grading never replace student's inventory/configuration.
-        if not grading and n!=1:self.ensure_control()
-        if 2 in q['dependencies']:self.repos(nodes)
-        if not grading and 7 in q['dependencies']:self.collections()
+        if not grading and not prerequisites_ready and n!=1:self.ensure_control()
+        if not prerequisites_ready and 2 in q['dependencies']:self.repos(nodes)
+        if not grading and not prerequisites_ready and 7 in q['dependencies']:self.collections()
         if n in (4,5):
             if not grading:self.t.ws('dnf -y install rhel-system-roles',timeout=600).require()
         if n==5:
             for h in nodes:self.t.node(h,'setenforce 0; sed -i "s/^SELINUX=.*/SELINUX=permissive/" /etc/selinux/config').require()
-        if n==9:
+        if n==9 and not prerequisites_ready:
             if not grading:
                 self.t.put(BASE+'/roles/requirements.yml','- name: balancer\n  src: http://classroom.example.com/content/haproxy.tar.gz\n- name: phpinfo\n  src: http://classroom.example.com/content/phpinfo.tar.gz\n')
                 self.t.dev('ansible-galaxy role install -r roles/requirements.yml -p roles --force').require()
             # Prerequisite Q8 is applied independently; target Q9 remains undone.
             for h in ('serverc','serverd'):
                 self.t.node(h,'set -e; dnf -y install httpd firewalld php; systemctl enable --now httpd firewalld php-fpm; firewall-cmd --permanent --add-service=http; firewall-cmd --add-service=http; printf "Welcome to %s on %s\\n" "$(hostname -f)" "$(hostname -I | cut -d\" \" -f1)" > /var/www/html/index.html',timeout=600).require()
+            self.t.node('bastion','systemctl disable --now httpd 2>/dev/null || true').require()
+        if n==9 and prerequisites_ready:
+            # Q3 supplies PHP and Q8 supplies the backend sites; PHP-FPM remains
+            # an environment prerequisite for the supplied phpinfo role.
+            for h in ('serverc','serverd'):
+                self.t.node(h,'dnf -y install php-fpm && systemctl enable --now php-fpm',timeout=600).require()
             self.t.node('bastion','systemctl disable --now httpd 2>/dev/null || true').require()
         if n==10:
             def prepare_volume(h):
@@ -246,7 +256,7 @@ vgs --noheadings --units m -o vg_name,vg_free research
         if n==14:
             # Firewall running is an environmental prerequisite; HTTP remains closed.
             self.t.node('servera','systemctl start firewalld').require()
-        if n==17 and not grading:
+        if n==17 and not grading and not prerequisites_ready:
             from .secrets import secrets
             s=secrets(self.config)
             self.t.put(BASE+'/secret.txt',s['vault']+'\n')
@@ -275,17 +285,21 @@ vgs --noheadings --units m -o vg_name,vg_free research
                 if not valid or self.t.node(h,'lvs research/data').rc==0:
                     raise RuntimeError(h+' 的 LVM 前置条件不正确')
     def reset(self,q):
+        from .prerequisites import Prerequisites,reset_nodes
+        scope=reset_nodes(q)
         print('正在检查第 '+str(q['id'])+' 题的资源并备份答案……',flush=True)
         self.preflight(q)
         backup=self.backup()
-        j=self.save_scene(q['nodes'],'reset',q['id']) if q['nodes'] else None
+        print('本次保存和恢复的受管节点：'+(', '.join(scope) if scope else '无'),flush=True)
+        j=self.save_scene(scope,'reset',q['id'],backup=backup) if scope else None
         if j is None:
             j=dict(id='rhce-reset-'+state.stamp(),kind='reset',question=q['id'],nodes=[],saved=[],restored=[],backup=backup,phase='ready')
         j['backup']=backup
         try:
             j['phase']='preparing';state.save('journals/'+j['id']+'.json',j)
-            if q['nodes']:self.baseline(q['nodes'])
-            self.clear_artifacts(q);self.prepare(q);self.verify_ready(q)
+            if scope:self.baseline(scope)
+            Prerequisites(self).ensure(q)
+            self.clear_artifacts(q);self.prepare(q,prerequisites_ready=True);self.verify_ready(q)
         except BaseException:
             failures=[]
             try:self.restore_scene(j)
@@ -338,10 +352,36 @@ vgs --noheadings --units m -o vg_name,vg_free research
         for h in NODES:
             if h!='bastion':self.t.node(h,'test "$(lsblk -n -o TYPE /dev/vdb | wc -l)" -eq 1').require()
         label='rhce-baseline-'+state.stamp()
+        print('本次基线名称：'+label,flush=True)
         for h in NODES:
             print('保存已验证基线：'+h,flush=True);self.vm('save',h,label)
         state.save('baseline.json',dict(label=label,nodes=list(NODES),identity=binding,created=time.time()))
         print('公共准备全部通过，命名基线已创建：'+label)
+
+    def resume_init(self,label):
+        if not re.fullmatch(r'rhce-baseline-\d{14}-[0-9a-f]{6}',label):raise ValueError('基线名称无效')
+        if state.load('baseline.json'):raise RuntimeError('基线已存在，不需要续建')
+        reports=sorted((state.STATE/'reports').glob('*-init.json'))
+        if not reports or not json.loads(reports[-1].read_text()).get('complete'):
+            raise RuntimeError('找不到成功的公共准备报告，不能续建基线')
+        self.guard(list(NODES))
+        binding=state.load('binding.json')
+        for h in NODES:
+            saved=self.t.run('find /var/lib/libvirt/images -maxdepth 1 -name '+shlex.quote('rh294-'+h+'-*.ovl-'+label)+' -print').require().splitlines()
+            if saved:
+                paths=self.snapshot_disks(h,label)
+                if set(saved)!=set(p+'-'+label for p in paths):raise RuntimeError(h+' 的基线磁盘不完整')
+                if self.t.run('LC_ALL=C virsh domstate '+h).require().strip()!='shut off':
+                    raise RuntimeError(h+' 已运行，无法校验中断前的磁盘副本；请先核对现场')
+                for path in paths:self.t.run('cmp -s '+shlex.quote(path)+' '+shlex.quote(path+'-'+label),timeout=300).require()
+                self.vm('start',h)
+                print('已校验并启动已保存基线：'+h,flush=True)
+            else:
+                print('续存基线：'+h,flush=True)
+                self.vm('save',h,label)
+        disks={h:self.snapshot_disks(h,label) for h in NODES}
+        state.save('baseline.json',dict(label=label,nodes=list(NODES),identity=binding,disks=disks,created=time.time()))
+        print('命名基线续建完成：'+label)
 
     def bootstrap_nodes(self):
         script=(Path(__file__).parent/'remote/bootstrap.py').read_bytes()

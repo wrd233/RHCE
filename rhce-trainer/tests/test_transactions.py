@@ -13,6 +13,11 @@ from rhce_trainer.model import question
 from rhce_trainer import state
 
 class Transactions(unittest.TestCase):
+    def test_question_12_defaults_to_lab_addresses_and_keeps_pdf_override(self):
+        self.assertEqual(Grading(Mock(),question(12)).profile,'live')
+        self.assertEqual(Grading(Mock(),question(12),'pdf').profile,'pdf')
+        self.assertEqual(Grading(Mock(),question(11)).profile,'pdf')
+
     def test_baseline_replace_validates_before_changing_binding(self):
         with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)):
             state.save('baseline.json',{'label':'old'});state.save('binding.json',{'host':'old'})
@@ -42,7 +47,8 @@ class Transactions(unittest.TestCase):
             e=Engine();e.preflight=Mock();e.backup=Mock(return_value='saved.tar.gz')
             e.clear_artifacts=Mock();e.prepare=Mock(side_effect=RuntimeError('dependency failed'))
             e.restore_scene=Mock();e.restore_answers=Mock()
-            with self.assertRaisesRegex(RuntimeError,'dependency failed'):e.reset(question(16))
+            with patch('rhce_trainer.prerequisites.Prerequisites.ensure'):
+                with self.assertRaisesRegex(RuntimeError,'dependency failed'):e.reset(question(16))
             e.restore_answers.assert_called_once_with('saved.tar.gz')
             saved=list((Path(d)/'journals').glob('*.json'))
             self.assertEqual(len(saved),1)
@@ -55,7 +61,8 @@ class Transactions(unittest.TestCase):
             e.save_scene=Mock(return_value={'id':'sample','nodes':['servera'],'saved':['servera']})
             e.baseline=Mock();e.clear_artifacts=Mock();e.prepare=Mock(side_effect=RuntimeError('prepare'))
             e.restore_scene=Mock(side_effect=RuntimeError('VM recovery'));e.restore_answers=Mock()
-            with self.assertRaisesRegex(RuntimeError,'恢复未完成'):e.reset(question(11))
+            with patch('rhce_trainer.prerequisites.Prerequisites.ensure'):
+                with self.assertRaisesRegex(RuntimeError,'恢复未完成'):e.reset(question(11))
             e.restore_answers.assert_called_once_with('archive')
             self.assertEqual(state.load('journals/sample.json')['phase'],'recovery_required')
 
@@ -116,11 +123,13 @@ class Transactions(unittest.TestCase):
         t.node('servera','hostname')
         self.assertIn('root@172.25.250.10',t.ws.call_args.args[0])
 
-    def test_vm_readiness_requires_completed_boot(self):
+    def test_vm_readiness_accepts_ssh_and_local_filesystems(self):
         from rhce_trainer.transport import Transport,Result
         t=Transport(dict(host='example',port=22,user='root'));t.node=Mock(return_value=Result(0,'',''))
         t.wait('bastion')
         command=t.node.call_args.args[1]
-        self.assertIn('multi-user.target',command);self.assertIn('bastion.lab.example.com',command)
+        self.assertIn('sshd.service && systemctl is-active --quiet local-fs.target',command)
+        self.assertIn('bastion.lab.example.com',command)
+        self.assertNotIn('multi-user.target',command)
 
 if __name__=='__main__':unittest.main()

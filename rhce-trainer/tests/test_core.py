@@ -81,7 +81,8 @@ class Tests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d,patch.object(state,'STATE',Path(d)):
    e=Engine();e.preflight=Mock();e.restore_answers=Mock();e.backup=Mock(return_value='archive');j={'id':'safe'}
    e.save_scene=Mock(return_value=j);e.baseline=Mock();e.clear_artifacts=Mock();e.prepare=Mock(side_effect=RuntimeError('prepare failed'));e.restore_scene=Mock()
-   with self.assertRaises(RuntimeError):e.reset(question(13))
+   with patch('rhce_trainer.prerequisites.Prerequisites.ensure'):
+    with self.assertRaises(RuntimeError):e.reset(question(13))
    e.restore_scene.assert_called_once_with(j)
    e.restore_answers.assert_called_once_with('archive')
    self.assertIsNone(state.load('current.json'))

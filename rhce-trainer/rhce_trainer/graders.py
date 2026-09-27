@@ -44,7 +44,7 @@ def lvm(g):
         else:
             size=600 if h in ('servera','serverb') else 400
             valid=bool(data) and abs(float(data[0]['lv_size'])-size*1024**2)<1024**2
-            fs=g.t.node(h,'blkid -s TYPE -o value /dev/research/data')
+            fs=g.t.node(h,'blkid -c /dev/null -s TYPE -o value /dev/research/data' if g.fast else 'blkid -s TYPE -o value /dev/research/data')
             mount=g.t.node(h,'findmnt -rn -S /dev/research/data')
             persistent=g.t.node(h,'findmnt --fstab --evaluate -rn -S /dev/research/data')
             msg=size==600 or g.message(h,'Could not create logical volume of that size')
@@ -72,6 +72,10 @@ def packages(g):
     for h in ('servera','serverb','serverc','serverd'):
         r=g.t.node(h,'rpm -q php mariadb')
         g.state_check(h+'.packages',h+' php/mariadb 已安装',10,r.rc==0,r.out,'rpm -q php mariadb')
+    if g.fast:
+        g.add('development-tools','dev 安装 Development Tools 组',15,None,{},'dnf group list')
+        g.add('latest','dev 所有包为仓库可用最新版本',15,None,{},'dnf check-update')
+        return
     r=g.t.node('servera','LC_ALL=C dnf -q group list --installed --hidden',timeout=180)
     g.state_check('development-tools','dev 安装 Development Tools 组',15,r.rc==0 and 'Development Tools' in r.out,r.out,'dnf group list --installed --hidden')
     r=g.t.node('servera','dnf -q check-update',timeout=300)
@@ -102,7 +106,7 @@ MANAGED[5]=selinux
 def partition(g):
     h='servera';block=json.loads(g.out(h,'block'))
     disks={d['name']:d for d in block['blockdevices']}
-    if 'vdd' in disks:raise RuntimeError('基线出现 vdd，题面双盘共用挂载点歧义，停止评分')
+    if 'vdd' in disks and not g.fast:raise RuntimeError('基线出现 vdd，题面双盘共用挂载点歧义，停止评分')
     parts=disks.get('vdb',{}).get('children',[])
     part=next((p for p in parts if p['name']=='vdb1'),{})
     expected=1500 if disks.get('vdb',{}).get('size',0)>=1501*1024**2 else 800
@@ -202,9 +206,9 @@ def users(g):
     from .secrets import secrets
     s=secrets(g.e.config)
     # Read trusted list on the controller and parse with installed PyYAML.
-    r=g.t.ws("curl -fsS http://172.25.254.254/content/user_list.yml | python3 -c 'import yaml,json,sys; print(json.dumps(yaml.safe_load(sys.stdin)))'")
+    r=g.t.ws("curl -fsS http://172.25.254.254/content/user_list.yml | python3 -B -c 'import yaml,json,sys; print(json.dumps(yaml.safe_load(sys.stdin)))'")
     source=json.loads(r.require())
-    r=g.command("python3 -c 'import yaml,json; print(json.dumps(yaml.safe_load(open(\"user_list.yml\"))))'")
+    r=g.command("python3 -B -c 'import yaml,json; print(json.dumps(yaml.safe_load(open(\"user_list.yml\"))))'")
     submitted=json.loads(r.out) if r.rc==0 else None
     g.state_check('list','提交的用户列表与给定资源一致',10,submitted==source,{'matches':submitted==source,'source_user_count':len(source.get('users',[]))},'semantic YAML comparison to supplied list')
     code='''import json,sys,pwd,grp,crypt,spwd
@@ -221,7 +225,7 @@ print(json.dumps(out))'''
     for h in g.q['nodes']:
         dev=h in ('servera','serverb')
         payload=dict(users=source['users'],job='developer' if dev else 'manager',group='devops' if dev else 'opsmgr',password=s['developer' if dev else 'manager'])
-        rows=json.loads(g.t.node(h,'python3 -c '+shlex.quote(code),json.dumps(payload).encode()).require())
+        rows=json.loads(g.t.node(h,'python3 -B -c '+shlex.quote(code),json.dumps(payload).encode()).require())
         g.state_check(h+'.users',h+' 用户分配、SHA512 密码及附加组',15,all(x['passed'] for x in rows),rows,'getpwnam/getspnam + crypt verification (hash/password never logged)')
 MANAGED[17]=users
 
@@ -254,6 +258,10 @@ def config(g):
 CONTROLLER[1]=config
 
 def install_roles(g):
+    if g.fast:
+        for id,desc in [('requirements','requirements.yml 使用指定 URL 并能在空目录安装'),('balancer.installed','balancer 安装位置与角色文件完整'),('phpinfo.installed','phpinfo 安装位置与角色文件完整')]:
+            g.add(id,desc,30,None,{},'requires fresh Galaxy installation')
+        return
     # Requirements must work in an empty target, not merely point at existing roles.
     import uuid
     tmp='/tmp/rhce-galaxy-'+uuid.uuid4().hex
@@ -264,7 +272,7 @@ try:
  expected={'balancer':'http://classroom.example.com/content/haproxy.tar.gz','phpinfo':'http://classroom.example.com/content/phpinfo.tar.gz'}
  print(json.dumps({'sources_match':isinstance(data,list) and all(any(isinstance(row,dict) and row.get('name')==name and row.get('src')==url for row in data) for name,url in expected.items())}))
 except Exception:print(json.dumps({'sources_match':False}))'''
-    source_result=g.command('python3 -c '+shlex.quote(code))
+    source_result=g.command('python3 -B -c '+shlex.quote(code))
     sources=json.loads(source_result.require())
     r=g.command('ansible-galaxy role install -r roles/requirements.yml -p '+tmp)
     g.add('requirements','requirements.yml 使用指定 URL 并能在空目录安装',30,r.rc==0 and sources['sources_match'],dict(returncode=r.rc,**sources),'requirements source validation + ansible-galaxy fresh install')
@@ -274,7 +282,7 @@ original=pathlib.Path(sys.argv[1]); installed=pathlib.Path(sys.argv[2]); files=[
 missing=[str(p.relative_to(original)) for p in files if not (installed/p.relative_to(original)).is_file()]
 changed=[str(p.relative_to(original)) for p in files if (installed/p.relative_to(original)).is_file() and p.read_bytes()!=(installed/p.relative_to(original)).read_bytes()]
 print(json.dumps(dict(reference_files=len(files),missing=missing,changed=changed,tasks=(installed/'tasks/main.yml').is_file())))'''
-        r2=g.command('python3 -c '+shlex.quote(script)+' '+shlex.quote(tmp+'/'+role)+' '+shlex.quote('roles/'+role))
+        r2=g.command('python3 -B -c '+shlex.quote(script)+' '+shlex.quote(tmp+'/'+role)+' '+shlex.quote('roles/'+role))
         try:e=json.loads(r2.out)
         except ValueError:e={}
         g.add(role+'.installed',role+' 安装位置与角色文件完整',30,r.rc==0 and e.get('reference_files',0)>0 and not e.get('missing') and not e.get('changed') and e.get('tasks'),e,'compare installed role files with Galaxy fresh install; no playbook YAML comparison')
@@ -296,7 +304,7 @@ for ns,name,version in [('ansible','posix','1.5.1'),('community','general','6.3.
   out.append(dict(name=ns+'.'+name,version=info.get('version'),passed=info.get('namespace')==ns and info.get('name')==name and info.get('version')==version and checked>0 and not errors,checked=checked,errors=errors[:20]))
  except Exception as e:out.append(dict(name=ns+'.'+name,passed=False,error=str(e)))
 print(json.dumps(out))'''
-    r=g.command('python3 -c '+shlex.quote(script));rows=json.loads(r.require())
+    r=g.command('python3 -B -c '+shlex.quote(script));rows=json.loads(r.require())
     for row in rows:g.add(row['name'],row['name']+' 指定版本、路径及文件完整性',45,row['passed'],row,'MANIFEST + FILES SHA256 checks as devops')
 CONTROLLER[7]=install_collections
 
@@ -312,7 +320,7 @@ try:
 except Exception:out['variables']=False;out['decrypts']=False
 out['secret_file']=pathlib.Path('secret.txt').is_file() and pathlib.Path('secret.txt').read_text().strip()==p['vault']
 print(json.dumps(out))'''
-    r=g.t.dev('python3 -c '+shlex.quote(code),json.dumps(s).encode());d=json.loads(r.require())
+    r=g.t.dev('python3 -B -c '+shlex.quote(code),json.dumps(s).encode());d=json.loads(r.require())
     for key,desc,w in [('encrypted','locker.yml 使用 Vault 加密',20),('decrypts','题目指定密码可解密',20),('variables','两个变量及值正确',30),('secret_file','secret.txt 内容正确',20)]:g.add(key,desc,w,d[key],{key:d[key]},'VaultLib decrypt and semantic YAML checks; sensitive values redacted')
 CONTROLLER[16]=vault_create
 
@@ -331,7 +339,18 @@ except Exception:out['old_rejected']=out['new_key']
 try:original=urllib.request.urlopen('http://172.25.254.254/content/salaries.yml',timeout=15).read();plain=dec(original,p['old']);out['content_unchanged']=current==plain
 except Exception:out['source_error']=True;out['content_unchanged']=False
 print(json.dumps(out))'''
-    r=g.t.dev('python3 -c '+shlex.quote(code),json.dumps(s).encode());d=json.loads(r.require())
+    r=g.t.dev('python3 -B -c '+shlex.quote(code),json.dumps(s).encode());d=json.loads(r.require())
     if d.get('source_error'):raise RuntimeError('原始 salaries.yml 不可读取/不能用题面旧密码解密，不能可靠评分')
     for key,desc,w in [('encrypted','库保持 Vault 加密',20),('new_key','新密码可解密',25),('old_rejected','旧密码不再可解密',15),('content_unchanged','明文内容与原库一致',30)]:g.add(key,desc,w,d[key],{key:d[key]},'VaultLib old/new key verification and plaintext equality, no plaintext logging')
 CONTROLLER[18]=vault_rekey
+
+
+def fast_config(g):
+    # Inventory/config plugins may execute submitted code. Do not invoke them in fast mode.
+    for name in ('dev','test','prod','balancers'):
+        g.add('group.'+name,name+' 有效组成员',10,None,{'reason':'有效清单需运行 Ansible 插件；快速模式不执行'},'ansible-inventory')
+    g.add('parent','prod 是 webservers 子组',10,None,{'reason':'未执行清单插件'},'ansible-inventory')
+    for key in ('DEFAULT_HOST_LIST','DEFAULT_ROLES_PATH','COLLECTIONS_PATHS'):
+        g.add(key,key+' 有效配置',10,None,{'reason':'未加载提交的 Ansible 配置'},'ansible-config')
+    r=g.t.ws('rpm -q ansible-core ansible-navigator')
+    g.add('software','所需 Ansible 软件包已安装',10,r.rc==0,r.out,'rpm -q ansible-core ansible-navigator')

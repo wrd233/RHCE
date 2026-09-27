@@ -62,7 +62,7 @@ rhce doctor
 
 ## 首次初始化、恢复与中断
 
-`rhce init` 是首次初始化操作：只处理五个受管节点，从官方原始 VM 镜像恢复，设置考试公共前提，并用官方 `rht-vmctl save` 保存命名基线。若发现已有保存点则停止，避免把用户最新保存点当成原始镜像。当前开发验证已建立基线时，不要再次 init。
+`rhce init` 是首次初始化操作：只处理五个受管节点，从官方原始 VM 镜像恢复，设置考试公共前提，并用官方 `rht-vmctl save` 保存命名基线。若发现已有保存点则停止，避免把用户最新保存点当成原始镜像。已有基线时，普通 init 拒绝运行；需要补齐公共准备可显式使用 `rhce init --prepare`，详见下文。
 
 ```sh
 rhce restore-lab --dry-run
@@ -133,3 +133,47 @@ python3 tests/live_cases.py --apply 13 8 10
 验收脚本会保存所选题实际涉及的受管 VM 和控制节点答案，逐题 reset、写入测试提交、grade，最后恢复原 VM 及答案；测试提交留在 `.rhce-trainer-retired` 供排查。未传 `--apply` 会拒绝运行。追加 `--negative` 会先建立正确系统状态，再换成空 playbook，验证旧状态不会被误判为满分。基础设施或恢复错误必须先处理，不能当作学生未得分。
 
 扩展题目：在 questions.json 定义要求、依赖、产物、影响节点，在 engine.py 加准备步骤，在 graders.py 注册独立评分函数；权重必须合计 100，并增加正反例验证。
+
+## 快速检查与公共准备（新增）
+
+已经手动运行 YAML 后，可以直接检查当前状态：
+
+```sh
+rhce grade 8 --fast
+rhce grade 8 --fast --verbose
+rhce grade 12 --fast --profile live --json
+```
+
+| 行为 | `rhce grade N` | `rhce grade N --fast` |
+|---|---|---|
+| 受管节点 | 保存现场、恢复基线、准备依赖、执行提交，最后恢复现场 | 只读取当前状态和提交文件 |
+| 执行证据 | 检查本次角色、模板、下载、错误分支等事件 | 标记为 `UNVERIFIED`（未验证） |
+| 控制节点特殊检查 | 包含 Galaxy 空目录安装验证 | 不安装角色，不加载提交的清单插件 |
+| 分数 | 完整评分，满分 100 | 得分 / 可验证项权重；不能与完整评分直接比较 |
+
+快速报告明确显示“快速检查”，逐项列出通过、失败和未验证；JSON 的 `passed` 分别为 `true`、`false`、`null`。`maximum` 是可验证项目的权重合计，`percentage` 是这些项目的通过比例；没有可验证项目时为 `null`。例如第 13 题正确现状可得 **75/75**，另有执行成功 20 分和清单主机执行范围 5 分未验证；这不等于完整评分 100 分。
+
+快速模式保留文件存在性及 devops 所有者检查，复用软件包、服务、配置文件、磁盘、用户、定时任务及 HTTP 等适用检查。混合状态与事件的检查点整体保守标为未验证：例如第 10 题 c/d 的容量回退和 bastion 缺卷组提示。第 3 题的 DNF 组/最新版本检查可能更新缓存或日志，快速模式不运行；第 6 题的安装可用性与完整性需要临时安装参考角色，也不运行。第 1 题仅检查提交文件和软件包，不加载可能执行代码的清单/配置插件。第 16–18 题仍需题面密码/资源，缺少必要资料会报环境错误。
+
+快速检查不获取会创建远程锁文件的跨电脑锁，不运行 playbook，不准备依赖，不备份、保存、恢复、重启 VM。只在本地保存评分报告；SSH/HTTP 访问可能产生服务端正常访问日志。检查期间请勿同时修改实验环境或执行 reset，以免观察结果跨越不同状态。退出码 0 表示可验证项没有失败，**不表示未验证项通过**；1 表示存在失败，2 表示环境/工具错误。
+
+已有基线时，使用显式补齐命令：
+
+```sh
+rhce init --prepare
+```
+
+该命令核对当前身份和已有基线全部磁盘，再逐项完成以下公共准备：
+
+- workstation 将 `/root/.ssh/lab_rsa` 复制为 devops 的 `/home/devops/.ssh/id_rsa`，权限 600；公钥由该私钥导出。
+- 五台受管节点确保 devops、公钥及免密 sudo 就绪；bastion 的 devops 密码设为 `redhat`。保留 authorized_keys 内已有其他公钥。
+- 从 workstation 以 devops、SSH BatchMode 验证 servera–serverd、bastion 的免密登录与 `sudo -n`。
+- 备份后清理五台节点 `/etc/yum.repos.d/*.repo`；重复清理不覆盖以前的同名备份。
+- 写入 devops 的 `~/.ansible-navigator.yml`，使用 `utility.lab.example.com/ee-supported-rhel8:latest` 和 `execution-environment.pull.policy: missing`，再检查有效设置。格式依据 [Navigator 配置文档](https://docs.ansible.com/projects/navigator/settings/)。
+- 写入 devops 的 `~/.config/containers/registries.conf`，把 `utility.lab.example.com` 设为搜索仓库和不安全仓库。用当前 Podman 先探测 v2 格式，必要时尝试旧格式，最后读取默认配置的有效结果验证；不拉取镜像。验证方式参见 [Podman info 文档](https://docs.podman.io/en/latest/markdown/podman-info.1.html)。
+
+原有私钥、配置和 repo 文件在对应 VM 的 `/root/.rhce-common-backups/<唯一编号>/` 下按原绝对路径保存；重复执行时相同配置不重复备份。不会修改 `/home/devops/ansible` 中的答案。注意 repo 清理会影响当前第 2 题等练习状态，因此只在需要重新准备公共环境时显式执行。
+
+`init --prepare` **不重置、停止或保存 VM，也不创建或更新基线**。旧基线仍保持原样，日后恢复旧基线可能撤销受管节点上的此次补齐；必要时再次显式补齐，或由管理员另建并核对新保存点后 `adopt-baseline`。没有基线时该命令也只准备，不建立基线。
+
+首次 `rhce init` 保留原有原始镜像重置流程和已有保存点保护，只有公共准备全部通过、空数据盘检查通过之后才保存新基线。任何公共步骤失败或跳过，整体退出为错误，不输出初始化完成。逐项结果存入本地 `reports/*-init.json`，其中 `complete: false` 表示公共准备不完整；`complete: true` 仅表示公共准备成功，基线是否保存成功以最终命令结果和 `baseline.json` 为准。准备失败时已完成的公共修改及其备份保留，可修复问题后重试；不会把部分成功当成基线建立完成。若保存基线中断，保留已创建保存点，不会通过重复 init 自动覆盖。

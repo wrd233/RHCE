@@ -29,9 +29,17 @@ def plan(n):
                 grade_effect='保存现场 → 基线 → 准备依赖 → 运行学生提交 → 逐项评分 → 恢复现场')
 
 def checkpoint(id,description,weight,passed,evidence,check):
-    return dict(id=id,description=description,weight=weight,check=check,status='PASS' if passed else 'FAIL',passed=bool(passed),evidence=evidence)
+    return dict(id=id,description=description,weight=weight,check=check,status='UNVERIFIED' if passed is None else 'PASS' if passed else 'FAIL',passed=None if passed is None else bool(passed),evidence=evidence)
 
 def report(q, checks, **extra):
     total=sum(c['weight'] for c in checks)
     if total!=100:raise ValueError(f'检查点权重不是 100: {total}')
+    if extra.get('mode')=='fast':
+        maximum=sum(c['weight'] for c in checks if c['passed'] is not None)
+        earned=sum(c['weight'] for c in checks if c['passed'])
+        return dict(question=q['id'],title=q['title'],score=earned,maximum=maximum,
+                    percentage=round(100*earned/maximum,2) if maximum else None,
+                    label='快速检查',notice='仅按可验证项目计算，与完整评分不可直接比较；不证明提交可重放。',
+                    counts={status:sum(c['status']==status for c in checks) for status in ('PASS','FAIL','UNVERIFIED')},
+                    checkpoints=checks,**extra)
     return dict(question=q['id'],title=q['title'],score=sum(c['weight'] for c in checks if c['passed']),maximum=100,checkpoints=checks,**extra)

@@ -6,10 +6,23 @@ from .engine import BASE
 from .transport import NODES,NODE_ADDRESSES
 from . import state
 
+# Explicit policy: mixed state/event checkpoints remain wholly unverified.
+FAST_UNVERIFIED={
+    3:{'development-tools','latest'},4:{'role'},5:{'role'},
+    6:{'requirements','balancer.installed','phpinfo.installed'},
+    8:{'role','serverc.template','serverd.template'},
+    9:{'balancer-role','phpinfo-role'},
+    10:{'bastion.missing','serverc.volume','serverd.volume'},
+    11:{'missing-vdd','fallback'},12:{'template'},13:{'all-hosts'},15:{'download'},
+}
+
 class Grading:
-    def __init__(self,e,q,profile='pdf'):
+    def __init__(self,e,q,profile='pdf',fast=False):
+        self.fast=fast
         self.e=e;self.t=e.t;self.q=q;self.profile=profile;self.checks=[];self.events=[];self.obs={};self.run_ok=False;self.run_result=None;self.run_directory=None;self.replay_verified=False
     def add(self,id,desc,weight,ok,evidence,check):
+        if self.fast and id in FAST_UNVERIFIED.get(self.q['id'],set()):
+            ok=None;evidence={'reason':'需要重放、执行事件或可能写入环境的检查；快速模式未验证'}
         self.checks.append(checkpoint(id,desc,weight,ok,evidence,check))
     def command(self,cmd):return self.t.dev(cmd)
     def has_event(self,action=None,role=None,host=None,dest=None,src=None):
@@ -24,7 +37,7 @@ for rel in json.loads(sys.argv[1]):
   s=p.stat(); out.append(dict(path=rel,exists=True,owner=pwd.getpwuid(s.st_uid).pw_name,size=s.st_size))
  except FileNotFoundError:out.append(dict(path=rel,exists=False))
 print(json.dumps(out))'''
-        return json.loads(self.t.ws('python3 -c '+shlex.quote(code)+' '+shlex.quote(json.dumps(self.q['artifacts']))).require())
+        return json.loads(self.t.ws('python3 -B -c '+shlex.quote(code)+' '+shlex.quote(json.dumps(self.q['artifacts']))).require())
     def safety_inventory(self):
         inv=json.loads(self.command('ansible-inventory --list').require())
         hv=inv.get('_meta',{}).get('hostvars',{})
@@ -67,16 +80,19 @@ print(json.dumps(out))'''
     def stop_runner(self):
         if not self.run_directory:return
         code="import pathlib,json,os,signal,time,sys\np=pathlib.Path(sys.argv[1])/'process.json'\nif p.exists():\n d=json.loads(p.read_text());proc=pathlib.Path('/proc/'+str(d['pid'])+'/stat')\n if proc.exists() and proc.read_text().split()[21]==d['starttime']:\n  os.killpg(d['pid'],signal.SIGTERM);time.sleep(2)\n  if proc.exists() and proc.read_text().split()[21]==d['starttime']:os.killpg(d['pid'],signal.SIGKILL)\n p.unlink(missing_ok=True)\n"
-        self.t.ws('python3 -c '+shlex.quote(code)+' '+shlex.quote(self.run_directory)).require()
+        self.t.ws('python3 -B -c '+shlex.quote(code)+' '+shlex.quote(self.run_directory)).require()
     def observe(self):
         script=(ROOT/'remote/inspect.py').read_bytes()
-        def one(h):return h,json.loads(self.t.node(h,'python3 -',script,timeout=240).require())
+        def one(h):return h,json.loads(self.t.node(h,'python3 -B -'+(' --fast' if self.fast else ''),script,timeout=240).require())
         with ThreadPoolExecutor(max_workers=5) as pool:self.obs=dict(pool.map(one,self.q['nodes']))
     def out(self,h,key):return self.obs[h]['commands'][key]['out']
     def file(self,h,p):return self.obs[h]['files'][p]
     def state_check(self,id,desc,weight,predicate,evidence,check):
         # A failed host must not erase successful checkpoints on other hosts.
         # Partial credit is possible only after a verified baseline and real task events.
+        if self.fast:
+            self.add(id,desc,weight,predicate,evidence,check)
+            return
         host=id.split('.',1)[0]
         required_host=host if host in NODES else self.q['nodes'][0] if len(self.q['nodes'])==1 else None
         replay=self.replay_verified and any(e.get('status')=='ok' and (required_host is None or e.get('host')==required_host) for e in self.events)
@@ -84,6 +100,7 @@ print(json.dumps(out))'''
             evidence={'observed':evidence,'reason':'缺少该检查点对应主机的基线重放成功事件，既有状态不计分'}
         self.add(id,desc,weight,replay and predicate,evidence,check)
     def grade(self):
+        if self.fast:return self.grade_fast()
         artifacts=self.artifacts()
         self.add('artifacts','题目要求的文件/目录存在且属于 devops',10,all(x.get('exists') and x.get('owner')=='devops' for x in artifacts),artifacts,'stat required artifacts')
         if not self.q['playbook']:
@@ -120,3 +137,19 @@ print(json.dumps(out))'''
             self.e.restore_scene(j)
         result['scene_restored']=True
         return result
+
+    def grade_fast(self):
+        artifacts=self.artifacts()
+        self.add('artifacts','题目要求的文件/目录存在且属于 devops',10,
+                 all(x.get('exists') and x.get('owner')=='devops' for x in artifacts),artifacts,'stat required artifacts')
+        from .graders import managed,controller,fast_config
+        if self.q['playbook']:
+            self.add('execution','以 devops 从正确基线执行成功',20,None,
+                     {'reason':'快速检查不执行提交，也不验证重放'},'fresh replay required')
+            self.observe()
+            managed(self)
+        elif self.q['id']==1:
+            fast_config(self)
+        else:
+            controller(self)
+        return report(self.q,self.checks,mode='fast',profile=self.profile,scene_modified=False)

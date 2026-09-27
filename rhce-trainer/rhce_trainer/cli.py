@@ -9,12 +9,14 @@ def main():
  p=argparse.ArgumentParser(prog='rhce',description='RHCE 9 逐题练习与基线重放评分')
  sub=p.add_subparsers(dest='command',required=True)
  sub.add_parser('list');sub.add_parser('status');sub.add_parser('doctor');sub.add_parser('connect')
- sub.add_parser('init',help='首次从原始镜像建立五个受管节点的命名基线')
+ s=sub.add_parser('init',help='首次初始化；--prepare 仅补齐公共准备')
+ s.add_argument('--prepare',action='store_true',help='显式补齐公共准备，不重置 VM 或更新已有基线')
  s=sub.add_parser('adopt-baseline',help='迁移电脑后接管明确的已有基线；只读核对 VM 与全部磁盘');s.add_argument('label')
  s.add_argument('--replace',action='store_true',help='显式切换到已核对的新基线，保留旧身份和基线记录')
  for name in ('show','reset','grade','plan'):
   s=sub.add_parser(name);s.add_argument('number',type=int,choices=range(1,20))
   if name=='grade':
+   s.add_argument('--fast',action='store_true',help='只检查当前状态，不执行提交或修改环境')
    s.add_argument('--verbose',action='store_true');s.add_argument('--hint',action='store_true');s.add_argument('--json',action='store_true');s.add_argument('--profile',choices=['pdf','live'],default='pdf')
   if name=='reset':s.add_argument('--dry-run',action='store_true')
  s=sub.add_parser('recover');s.add_argument('journal');s.add_argument('--with-answers',action='store_true',help='同时恢复归档答案；当前答案保留到 retired 目录')
@@ -52,8 +54,8 @@ def main():
    print(json.dumps({'current':state.load('current.json'),'baseline':state.load('baseline.json'),'journals':[{'id':x.stem,'phase':json.loads(x.read_text()).get('phase')} for x in sorted((state.STATE/'journals').glob('*.json'))]},ensure_ascii=False,indent=2));return
   if a.command=='restore-lab' and a.dry_run:
    print('将备份现场并恢复：'+', '.join(NODES));return
-  with state.locked(), (contextlib.nullcontext() if a.command=='adopt-baseline' else e.t.lease()):
-   if a.command=='init':e.init();print('命名基线已创建。')
+  with state.locked(), (contextlib.nullcontext() if a.command=='adopt-baseline' or (a.command=='grade' and a.fast) else e.t.lease()):
+   if a.command=='init':e.init(prepare_only=a.prepare)
    elif a.command=='adopt-baseline':e.adopt_baseline(a.label,replace=a.replace)
    elif a.command=='reset':e.reset(question(a.number))
    elif a.command=='recover':
@@ -69,17 +71,19 @@ def main():
     j=e.restore_lab();print('五个受管节点已恢复；控制节点答案保留。恢复点：'+j['id'])
    elif a.command=='grade':
     with contextlib.redirect_stdout(sys.stderr):
-     r=Grading(e,question(a.number),a.profile).grade()
+     r=Grading(e,question(a.number),a.profile,fast=a.fast).grade()
     path='reports/'+state.stamp()+f'-q{a.number}.json';state.save(path,r)
     if a.json:print(json.dumps(r,ensure_ascii=False,indent=2))
     else:
+     if a.fast:print('快速检查：'+r['notice'])
      print(f"\n第{r['question']}题 {r['title']}")
      for c in r['checkpoints']:
-      print(f"[{c['status']}] {c['description']} ({c['weight']}分)")
+      label={'PASS':'通过','FAIL':'失败','UNVERIFIED':'未验证'}[c['status']] if a.fast else c['status']
+      print(f"[{label}] {c['description']} ({c['weight']}分)")
       if a.verbose or not c['passed']:print('  '+json.dumps(c['evidence'],ensure_ascii=False))
-     print(f"\n得分：{r['score']}/100\n报告：{state.STATE/path}")
+     print(f"\n得分：{r['score']}/{r['maximum']}\n报告：{state.STATE/path}")
      if a.hint:print('提示：根据失败项的实际结果检查 play 的目标组、依赖、模块参数及运行错误；不要求与参考 YAML 相同。')
-    if r['score']<100:sys.exit(1)
+    if any(c['status']=='FAIL' for c in r['checkpoints']):sys.exit(1)
  except (RuntimeError,ValueError,OSError,subprocess.SubprocessError) as exc:
   print('ERROR：'+str(exc),file=sys.stderr);sys.exit(2)
  except KeyboardInterrupt:

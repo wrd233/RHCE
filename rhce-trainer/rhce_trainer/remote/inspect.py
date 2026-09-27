@@ -1,5 +1,5 @@
 """Read-only observations, executed via stdin on a managed VM as root."""
-import subprocess,json,os,stat,configparser,socket,pathlib,pwd,grp
+import sys,subprocess,json,os,stat,configparser,socket,pathlib,pwd,grp
 
 def cmd(s):
  p=subprocess.run(s,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=90)
@@ -27,6 +27,7 @@ commands={
 'bios':'cat /sys/class/dmi/id/bios_version','memory':'awk \'/MemTotal/ {print int($2/1024)}\' /proc/meminfo',
 }
 # Ansible module_utils may not be installed on managed hosts; local facts fallbacks above.
+if '--fast' in sys.argv:commands.pop('facts',None)
 for k,v in commands.items():r['commands'][k]=cmd(v)
 repos=[]
 for path in pathlib.Path('/etc/yum.repos.d').glob('*.repo'):

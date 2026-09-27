@@ -308,33 +308,70 @@ vgs --noheadings --units m -o vg_name,vg_free research
             raise
         j['phase']='prepared';state.save('journals/'+j['id']+'.json',j)
         return j
-    def init(self):
-        # Only first-time initialization; no implicit fullreset / deletion of saves.
-        if state.load('baseline.json'):raise RuntimeError('基线已存在；无需再次 init')
-        binding=self.identity();state.save('binding.json',binding)
-        self.backup()
+    def init(self,prepare_only=False):
+        previous=state.load('baseline.json')
+        if previous:
+            if not prepare_only:raise RuntimeError('基线已存在；显式使用 rhce init --prepare 补齐公共准备，保留原基线')
+            self.guard(list(NODES),require_space=False)
+            for h in NODES:self.snapshot_disks(h,previous['label'])
+        if prepare_only:
+            if not previous:
+                identity=self.identity()
+                binding=state.load('binding.json')
+                if binding and binding!=identity:raise RuntimeError('已有身份绑定与当前环境不一致；停止公共准备')
+            self.bootstrap_nodes()
+            print('公共准备全部通过；未创建或更新基线，未重置虚拟机。')
+            return
+        # Preserve first-init safeguards: no existing saves, no implicit baseline replacement.
+        binding=self.identity()
+        old_binding=state.load('binding.json')
+        if old_binding and old_binding!=binding:raise RuntimeError('已有身份绑定与当前环境不一致；停止初始化')
         for h in NODES:
-            # listsaves returns only first disk, so inspect every attached disk.
             r=self.t.run('find /var/lib/libvirt/images -maxdepth 1 -name '+shlex.quote('rh294-'+h+'-*.ovl-*')+' -print').require()
-            if r.strip():raise RuntimeError(h+' 已有保存点；不能把最新保存点误当初始镜像。请保留后人工建立基线。')
+            if r.strip():raise RuntimeError(h+' 已有保存点；请人工核对并 adopt-baseline，不会自动覆盖')
+        state.save('binding.json',binding)
+        self.guard(list(NODES))
+        self.backup()
         for h in NODES:
             print('从原始镜像初始化：'+h,flush=True);self.vm('reset',h)
         self.bootstrap_nodes()
+        for h in NODES:
+            if h!='bastion':self.t.node(h,'test "$(lsblk -n -o TYPE /dev/vdb | wc -l)" -eq 1').require()
         label='rhce-baseline-'+state.stamp()
         for h in NODES:
             print('保存已验证基线：'+h,flush=True);self.vm('save',h,label)
         state.save('baseline.json',dict(label=label,nodes=list(NODES),identity=binding,created=time.time()))
+        print('公共准备全部通过，命名基线已创建：'+label)
+
     def bootstrap_nodes(self):
-        # Do not modify existing SSH configuration or passwords.
+        script=(Path(__file__).parent/'remote/bootstrap.py').read_bytes()
+        results=[]
+        def step(label,operation):
+            try:
+                value=operation()
+                results.append(dict(item=label,status='PASS'))
+                print('[通过] '+label,flush=True)
+                return value
+            except (RuntimeError,OSError,subprocess.SubprocessError) as exc:
+                results.append(dict(item=label,status='FAIL',error=str(exc)))
+                print('[失败] '+label+'：'+str(exc),flush=True)
+                return None
+        def remote(action,host=None,*args):
+            command=shlex.join(['python3','-',action]+list(args))
+            return (self.t.node(host,command,script) if host else self.t.ws(command,script)).require()
+        public=step('workstation：安装并验证 devops 私钥（600）',lambda:remote('key'))
         for h in NODES:
-            r=self.t.node(h,'id devops')
-            if r.rc:
-                self.t.node(h,'useradd devops; install -d -m 700 -o devops -g devops /home/devops/.ssh').require()
-                pub=self.t.ws('cat /home/devops/.ssh/authorized_keys').require()
-                self.t.node(h,'cat > /home/devops/.ssh/authorized_keys; chown devops:devops /home/devops/.ssh/authorized_keys; chmod 600 /home/devops/.ssh/authorized_keys',pub.encode()).require()
-            self.t.node(h,"printf 'devops ALL=(ALL) NOPASSWD: ALL\\n' > /etc/sudoers.d/rhce-trainer-devops; chmod 440 /etc/sudoers.d/rhce-trainer-devops; visudo -cf /etc/sudoers.d/rhce-trainer-devops").require()
-            # Official exercise initialization calls for empty managed repo configuration.
-            self.t.node(h,'mkdir -p /root/.rhce-original-repos; for f in /etc/yum.repos.d/*.repo; do test ! -f "$f" || mv "$f" /root/.rhce-original-repos/; done').require()
-            cmd=shlex.join(INNER+['devops@'+h,'sudo -n true'])
-            self.t.ws('sudo -iu devops '+cmd).require()
-            if h!='bastion':self.t.node(h,'test "$(lsblk -n -o TYPE /dev/vdb | wc -l)" -eq 1').require()
+            if public:
+                step(h+'：devops、公钥、免密 sudo'+('、密码 redhat' if h=='bastion' else ''),lambda h=h:remote('account',h,h,public.strip()))
+            else:
+                results.append(dict(item=h+'：公钥准备',status='SKIP',error='workstation 私钥准备失败'))
+                print('[跳过] '+h+'：workstation 私钥准备失败',flush=True)
+            step(h+'：备份并清理 repo 文件',lambda h=h:remote('repos',h))
+            step(h+'：devops 免密 SSH 与 sudo 验证',lambda h=h:self.t.ws('sudo -iu devops '+shlex.join(INNER+['devops@'+h,'test "$(id -un)" = devops && sudo -n true'])).require())
+        step('workstation：ansible-navigator 配置与有效设置验证',lambda:remote('navigator'))
+        step('workstation：Podman 仓库格式与有效配置验证',lambda:remote('podman'))
+        path='reports/'+state.stamp()+'-init.json'
+        success=all(row['status']=='PASS' for row in results)
+        state.save(path,dict(operation='common-preparation',complete=success,items=results))
+        print('公共准备报告：'+str(state.STATE/path),flush=True)
+        if not success:raise RuntimeError('公共准备未完成；失败/跳过项见报告。不会建立基线；修复后可显式 init --prepare 重试')
